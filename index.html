@@ -654,24 +654,109 @@
         .answer-row { display: flex; gap: 14px; width: 100%; }
 
         /* RESULTS */
+        /* ===================== RESULTS CAROUSEL ===================== */
+        .results-carousel-wrap {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .results-carousel-track {
+            display: flex;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
+        }
+
+        .result-slide {
+            min-width: 100%;
+            padding: 0 2px;
+            box-sizing: border-box;
+        }
+
         .result-card {
             background: var(--surface);
             border: 2px solid var(--border);
             border-radius: var(--radius);
             overflow: hidden;
-            transition: all var(--transition);
-            margin-bottom: 12px;
+            transition: border-color var(--transition);
         }
-        .result-card:hover { border-color: var(--primary); box-shadow: var(--shadow); }
+        .result-card:hover { border-color: var(--primary); }
+
+        .result-img-wrap {
+            width: 100%;
+            height: 200px;
+            background: var(--surface2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .result-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .result-img-placeholder {
+            font-size: 3.5rem;
+            opacity: 0.35;
+        }
+
+        .result-img-loading {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .result-card-top {
             display: flex;
             align-items: center;
             gap: 16px;
-            padding: 18px 20px 14px;
-            cursor: pointer;
+            padding: 16px 18px 12px;
         }
-        .result-card-top:hover .result-name { color: var(--primary); }
+
+        .result-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-family: 'Baloo 2', cursive;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .result-name { font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 1.1rem; flex: 1; }
+
+        .result-save-btn {
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all var(--transition);
+        }
+        .result-save-btn:hover { background: var(--secondary-light); border-color: var(--secondary); color: var(--success-text); }
+        .result-save-btn--saved { background: var(--secondary-light); border-color: var(--secondary); color: var(--success-text); cursor: default; }
 
         .result-links {
             display: flex;
@@ -695,48 +780,98 @@
         .result-link:last-child { border-right: none; }
         .result-link:hover { background: var(--primary-light); }
 
-        .result-num {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: var(--primary-light);
-            color: var(--primary);
-            font-family: 'Baloo 2', cursive;
-            font-weight: 800;
+        /* Carousel nav dots */
+        .carousel-dots {
             display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 16px 0 8px;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .carousel-dot.active { background: var(--primary); transform: scale(1.3); }
+
+        /* None of these slide */
+        .result-slide-none {
+            min-width: 100%;
+            padding: 0 2px;
+            box-sizing: border-box;
+        }
+
+        .none-card {
+            background: var(--surface);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 36px 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .none-card-title {
+            font-family: 'Baloo 2', cursive;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+
+        .none-card-sub {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        /* Post-save overlay */
+        .save-success-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 8000;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-            flex-shrink: 0;
+            padding: 24px;
         }
-        .result-name { font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 1.1rem; flex: 1; transition: color var(--transition); cursor: pointer; }
-        .result-name:hover { color: var(--primary); }
 
-        .result-save-btn {
-            background: var(--surface2);
-            border: 1.5px solid var(--border);
-            border-radius: var(--radius-sm);
+        .save-success-overlay.active { display: flex; }
+
+        .save-success-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: 36px 28px;
+            text-align: center;
+            max-width: 340px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .save-success-mascot {
+            font-size: 3rem;
+            animation: mascot-bounce 1.5s ease-in-out infinite;
+        }
+
+        .save-success-title {
+            font-family: 'Baloo 2', cursive;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--text);
+        }
+
+        .save-success-sub {
+            font-size: 0.92rem;
             color: var(--text-muted);
-            font-family: 'Nunito', sans-serif;
-            font-size: 0.74rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            padding: 6px 14px;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: all var(--transition);
-        }
-        .result-save-btn:hover {
-            background: var(--secondary-light);
-            border-color: var(--secondary);
-            color: var(--success-text);
-        }
-        .result-save-btn--saved {
-            background: var(--secondary-light);
-            border-color: var(--secondary);
-            color: var(--success-text);
-            cursor: default;
         }
 
         /* HINT ADDON */
@@ -2100,17 +2235,38 @@
         </div>
         <div class="container" style="padding-top:0;">
             <div class="mascot-wrap">
-                <div class="mascot-circle mascot-panda" id="results-mascot">🐼</div>
+                <div class="mascot-circle mascot-panda" id="results-mascot"></div>
                 <div class="speech-bubble" id="results-bubble">Is this what you were thinking of?</div>
             </div>
 
-            <div id="results-list"></div>
-
-            <div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
-                <button class="btn btn-ghost" style="width:100%;" onclick="noneOfThese()">None of these, keep going</button>
-                <button class="btn btn-ghost" style="width:100%;" onclick="startOver()">Try something else</button>
+            <!-- Carousel -->
+            <div class="results-carousel-wrap">
+                <div class="results-carousel-track" id="results-carousel-track"></div>
             </div>
+            <div class="carousel-dots" id="results-dots"></div>
         </div>
+    </div>
+</div>
+
+<!-- Save success overlay -->
+<div class="save-success-overlay" id="save-success-overlay">
+    <div class="save-success-card">
+        <div class="save-success-mascot" id="save-success-mascot"></div>
+        <div class="save-success-title" id="save-success-title">Got it! Saved!</div>
+        <div class="save-success-sub">Is that what you were looking for?</div>
+        <button class="btn btn-primary" style="width:100%;" onclick="closeSaveOverlay(true)">Yes, that's it! 🎉</button>
+        <button class="btn btn-ghost" style="width:100%;" onclick="closeSaveOverlay(false)">No, keep searching</button>
+    </div>
+</div>
+
+<!-- Post-correct overlay -->
+<div class="save-success-overlay" id="found-overlay">
+    <div class="save-success-card">
+        <div class="save-success-mascot" id="found-overlay-mascot"></div>
+        <div class="save-success-title">Woohoo! Found it! 🎉</div>
+        <div class="save-success-sub">What would you like to do next?</div>
+        <button class="btn btn-primary" style="width:100%;" onclick="startOver()">Try something else 🔍</button>
+        <button class="btn btn-ghost" style="width:100%;" onclick="goHome()">Go back home 🏠</button>
     </div>
 </div>
 
@@ -2555,9 +2711,14 @@ async function askNextQuestion() {
         state.messages.push({ role: 'user', content: msg });
     }
 
+    // Hard limit - force a guess at question 21
+    if (questionNum >= 21) {
+        state.messages.push({ role: 'user', content: 'You have reached the 21 question limit. Please make your best guess now using the GUESS: format.' });
+    }
+
     // --------------------------------------------------------
     // PROXY WORKER URL - paste your Cloudflare Worker URL here
-    const PROXY_URL = 'https://finditpal-proxy.lbaranikumar.workers.dev/';
+    const PROXY_URL = 'https://finditpal-proxy.lbaranikumar.workers.dev';
     // --------------------------------------------------------
 
     if (PROXY_URL.includes('YOUR_WORKER')) {
@@ -2628,63 +2789,77 @@ async function askNextQuestion() {
     }
 }
 
-function answerQuestion(answer) {
-    // Grab any extra hint the user typed
+function answerQuestion(answer, questionContext) {
     const hintInput = document.getElementById('hint-input');
     const hint = hintInput ? hintInput.value.trim() : '';
-    const fullAnswer = hint ? `${answer}. Extra detail: ${hint}` : answer;
-
-    // Clear hint box
     if (hintInput) hintInput.value = '';
+
+    // Include question context so the AI knows what was being asked
+    let fullAnswer;
+    if (questionContext) {
+        fullAnswer = hint
+            ? `Re: "${questionContext}" - My answer: ${answer}. Extra detail: ${hint}`
+            : `Re: "${questionContext}" - My answer: ${answer}`;
+    } else {
+        fullAnswer = hint ? `${answer}. Extra detail: ${hint}` : answer;
+    }
 
     state.messages.push({ role: 'user', content: fullAnswer });
     askNextQuestion();
 }
 
-// Detects if the AI snuck in an "or" question and extracts the options
 function parseQuestion(reply) {
     const lines = reply.split('\n').map(l => l.trim()).filter(Boolean);
-    const questionLine = lines.find(l => l.endsWith('?')) || reply;
 
-    // Detect "A or B" pattern in the question
-    const orMatch = questionLine.match(/\b(\w[\w\s,]+?)\s+or\s+([\w\s,]+?)\??$/i);
-    if (orMatch) {
-        const opt1 = orMatch[1].trim().replace(/^(is it |was it |does it |did it |are they )/i, '');
-        const opt2 = orMatch[2].trim().replace(/\?$/, '');
-        return {
-            question: questionLine,
-            options: [
-                { label: capitalise(opt1), value: opt1, style: 'choice-a' },
-                { label: capitalise(opt2), value: opt2, style: 'choice-b' },
-                { label: 'Not sure', value: 'Not sure', style: 'maybe' },
-                { label: 'Neither', value: 'Neither of those', style: 'neither' }
-            ]
-        };
-    }
+    // Find the actual question line (ends with ?)
+    const questionLine = lines.find(l => l.endsWith('?')) || lines[lines.length - 1] || reply;
 
-    // Check for OPTIONS: line from structured format
+    // Check for OPTIONS: structured format first
     const optLine = lines.find(l => l.startsWith('OPTIONS:'));
     if (optLine) {
         const rawOpts = optLine.replace('OPTIONS:', '').trim().split('|').map(s => s.trim()).filter(Boolean);
-        const opts = rawOpts.map(o => ({ label: capitalise(o), value: o }));
+        const opts = rawOpts.map(o => ({ label: capitalise(o), value: o, context: questionLine }));
         opts.push({ label: 'Not sure', value: 'Not sure', style: 'maybe' });
-        opts.push({ label: 'Neither', value: 'Neither of those', style: 'neither' });
-        const cleanQuestion = lines.filter(l => !l.startsWith('OPTIONS:')).join(' ');
-        return { question: cleanQuestion, options: opts };
+        opts.push({ label: 'Neither', value: 'Neither of those', style: 'neither', context: questionLine });
+        const cleanQ = lines.filter(l => !l.startsWith('OPTIONS:')).join(' ').trim();
+        return { question: cleanQ, options: opts };
+    }
+
+    // Detect "X or Y?" choice question
+    // Only match if "or" appears in the latter half of the question (avoids false positives)
+    const orMatch = questionLine.match(/^(.{15,}?)\s+or\s+([\w][\w\s,'-]{2,}?)\??$/i);
+    if (orMatch) {
+        const fullQ = questionLine;
+        const optA  = orMatch[1].replace(/^.*(involve|have|is|was|does|did|are|include)\s+/i, '').trim();
+        const optB  = orMatch[2].replace(/\?$/, '').trim();
+
+        // Only treat as choice question if both options are reasonably short phrases
+        if (optA.split(' ').length <= 6 && optB.split(' ').length <= 6) {
+            return {
+                question: fullQ,
+                options: [
+                    { label: capitalise(optA), value: capitalise(optA), style: 'choice-a', context: fullQ },
+                    { label: capitalise(optB), value: capitalise(optB), style: 'choice-b', context: fullQ },
+                    { label: 'Not sure', value: 'Not sure', style: 'maybe' },
+                    { label: 'Neither', value: 'Neither of those', style: 'neither', context: fullQ }
+                ]
+            };
+        }
     }
 
     // Standard yes/no
     return {
         question: questionLine,
         options: [
-            { label: 'Yes', value: 'Yes', style: 'yes' },
-            { label: 'No', value: 'No', style: 'no' },
+            { label: 'Yes', value: 'Yes', style: 'yes', context: questionLine },
+            { label: 'No',  value: 'No',  style: 'no',  context: questionLine },
             { label: 'Not sure', value: 'Not sure', style: 'maybe' }
         ]
     };
 }
 
 function capitalise(str) {
+    if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
@@ -2703,13 +2878,12 @@ function renderAnswerButtons(options) {
             const btn = document.createElement('button');
             btn.textContent = opt.label;
             btn.className = (opt.style === 'yes' || i % 2 === 0) ? 'btn btn-yes' : 'btn btn-no';
-            btn.onclick = () => answerQuestion(opt.value);
+            btn.onclick = () => answerQuestion(opt.value, opt.context || null);
             row.appendChild(btn);
         });
         container.appendChild(row);
     }
 
-    // Not sure + Neither in a row if both exist
     if (maybeOpt || neitherOpt) {
         const subRow = document.createElement('div');
         subRow.className = 'answer-sub-row';
@@ -2717,22 +2891,58 @@ function renderAnswerButtons(options) {
             const btn = document.createElement('button');
             btn.className = 'btn btn-maybe';
             btn.textContent = maybeOpt.label;
-            btn.onclick = () => answerQuestion(maybeOpt.value);
+            btn.onclick = () => answerQuestion(maybeOpt.value, null);
             subRow.appendChild(btn);
         }
         if (neitherOpt) {
             const btn = document.createElement('button');
             btn.className = 'btn btn-neither';
             btn.textContent = neitherOpt.label;
-            btn.onclick = () => answerQuestion(neitherOpt.value);
+            btn.onclick = () => answerQuestion(neitherOpt.value, neitherOpt.context || null);
             subRow.appendChild(btn);
         }
         container.appendChild(subRow);
     }
 
-    // Show hint addon
     document.getElementById('hint-addon').style.display = 'block';
 }
+
+// Category to emoji fallback map
+const CATEGORY_IMG_FALLBACK = {
+    'Movies': '🎬', 'TV Shows': '📺', 'Music': '🎵', 'Video Games': '🎮',
+    'Sports': '⚽', 'Celebrities': '⭐', 'Fictional Characters': '🧙',
+    'Countries': '🌍', 'Cities': '🏙️', 'Food': '🍕', 'Colours': '🎨',
+    'Animals': '🐾', 'Books': '📚', 'Apps & Websites': '📱',
+    'Brands': '🏷️', 'Something Else': '🤔', 'General': '🔍'
+};
+
+// Fetch Wikipedia thumbnail for a given item name
+async function fetchWikiImage(item) {
+    try {
+        const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(item)}`;
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data?.thumbnail?.source || data?.originalimage?.source || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// Render image in a result card's image slot
+async function loadResultImage(imgWrapId, item) {
+    const wrap = document.getElementById(imgWrapId);
+    if (!wrap) return;
+    const imgSrc = await fetchWikiImage(item);
+    if (imgSrc) {
+        wrap.innerHTML = `<img class="result-img" src="${imgSrc}" alt="${item}" onerror="this.parentElement.innerHTML='<span class=result-img-placeholder>${CATEGORY_IMG_FALLBACK[state.selectedCategory] || '🔍'}</span>'">`;
+    } else {
+        wrap.innerHTML = `<span class="result-img-placeholder">${CATEGORY_IMG_FALLBACK[state.selectedCategory] || '🔍'}</span>`;
+    }
+}
+
+let currentCarouselIndex = 0;
+let carouselItems = [];
 
 function handleGuess(reply) {
     const lines = reply.split('\n');
@@ -2746,35 +2956,120 @@ function handleGuess(reply) {
         return;
     }
 
+    carouselItems = items.slice(0, 3);
+    currentCarouselIndex = 0;
+
     const mascotMsg = lines.filter(l => !l.includes('GUESS:')).join(' ').trim();
-
     updateAllMascots();
-    document.getElementById('results-bubble').textContent =
-        mascotMsg || `I think I figured it out! Is it one of these?`;
+    document.getElementById('results-bubble').textContent = mascotMsg || `I think I figured it out! Is it one of these?`;
 
-    const resultsList = document.getElementById('results-list');
-    resultsList.innerHTML = items.slice(0, 3).map((item, i) => {
+    const track = document.getElementById('results-carousel-track');
+    const dotsWrap = document.getElementById('results-dots');
+    track.innerHTML = '';
+    dotsWrap.innerHTML = '';
+
+    // Build result slides
+    carouselItems.forEach((item, i) => {
         const googleUrl  = `https://www.google.com/search?q=${encodeURIComponent(item)}`;
         const wikiUrl    = `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(item)}`;
         const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(item)}`;
         const safeItem   = item.replace(/'/g, "\\'");
-        return `
-        <div class="result-card">
-            <div class="result-card-top">
-                <div class="result-num">${i + 1}</div>
-                <div class="result-name" onclick="searchResult('${safeItem}', '${googleUrl}')">${item}</div>
-                <button class="result-save-btn" id="save-btn-${i}" onclick="saveResult('${safeItem}', ${i})" title="Save this result">Save</button>
-            </div>
-            <div class="result-links">
-                <a class="result-link" href="${googleUrl}" target="_blank" rel="noopener" onclick="saveToHistory('${safeItem}', state.selectedCategory)">Search</a>
-                <a class="result-link" href="${wikiUrl}" target="_blank" rel="noopener">Wikipedia</a>
-                <a class="result-link" href="${youtubeUrl}" target="_blank" rel="noopener">YouTube</a>
-            </div>
+        const imgWrapId  = `result-img-${i}`;
+
+        const slide = document.createElement('div');
+        slide.className = 'result-slide';
+        slide.innerHTML = `
+            <div class="result-card">
+                <div class="result-img-wrap" id="${imgWrapId}">
+                    <div class="result-img-loading"></div>
+                </div>
+                <div class="result-card-top">
+                    <div class="result-num">${i + 1}</div>
+                    <div class="result-name">${item}</div>
+                    <button class="result-save-btn" id="save-btn-${i}" onclick="saveResult('${safeItem}', ${i})" title="Save this result">Save ✓</button>
+                </div>
+                <div class="result-links">
+                    <a class="result-link" href="${googleUrl}" target="_blank" rel="noopener">Search</a>
+                    <a class="result-link" href="${wikiUrl}" target="_blank" rel="noopener">Wikipedia</a>
+                    <a class="result-link" href="${youtubeUrl}" target="_blank" rel="noopener">YouTube</a>
+                </div>
+            </div>`;
+        track.appendChild(slide);
+
+        // Dot
+        const dot = document.createElement('div');
+        dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+        dot.onclick = () => goToResultSlide(i);
+        dotsWrap.appendChild(dot);
+
+        // Load image async
+        loadResultImage(imgWrapId, item);
+    });
+
+    // "None of these" slide
+    const noneSlide = document.createElement('div');
+    noneSlide.className = 'result-slide result-slide-none';
+    noneSlide.innerHTML = `
+        <div class="none-card">
+            <div style="font-size:2.5rem;">🤔</div>
+            <div class="none-card-title">None of these?</div>
+            <div class="none-card-sub">No worries, let's keep narrowing it down.</div>
+            <button class="btn btn-primary" style="width:100%;" onclick="noneOfThese()">Keep going 🔍</button>
+            <button class="btn btn-ghost" style="width:100%;" onclick="startOver()">Try something else</button>
+            <button class="btn btn-ghost" style="width:100%;" onclick="goHome()">Go home 🏠</button>
         </div>`;
-    }).join('');
+    track.appendChild(noneSlide);
+
+    // None dot
+    const noneDot = document.createElement('div');
+    noneDot.className = 'carousel-dot';
+    noneDot.onclick = () => goToResultSlide(carouselItems.length);
+    dotsWrap.appendChild(noneDot);
 
     showPage('results-page');
     launchConfetti();
+}
+
+function goToResultSlide(index) {
+    currentCarouselIndex = index;
+    const track = document.getElementById('results-carousel-track');
+    track.style.transform = `translateX(-${index * 100}%)`;
+    document.querySelectorAll('.carousel-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === index);
+    });
+}
+
+function saveResult(item, btnIndex) {
+    saveToHistory(item, state.selectedCategory);
+    const btn = document.getElementById('save-btn-' + btnIndex);
+    if (btn) {
+        btn.textContent = 'Saved!';
+        btn.classList.add('result-save-btn--saved');
+        btn.disabled = true;
+    }
+
+    // Show save overlay
+    const m = MASCOTS[state.mascot];
+    document.getElementById('save-success-mascot').innerHTML = `<img src="${m.img}" alt="${m.name}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;mix-blend-mode:multiply;">`;
+    document.getElementById('save-success-title').textContent = `Saved "${item}"!`;
+    document.getElementById('save-success-overlay').classList.add('active');
+}
+
+function closeSaveOverlay(wasCorrect) {
+    document.getElementById('save-success-overlay').classList.remove('active');
+    if (wasCorrect) {
+        launchConfetti();
+        // Show found overlay
+        const m = MASCOTS[state.mascot];
+        document.getElementById('found-overlay-mascot').innerHTML = `<img src="${m.img}" alt="${m.name}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;mix-blend-mode:multiply;">`;
+        document.getElementById('found-overlay').classList.add('active');
+    }
+}
+
+function goHome() {
+    document.getElementById('found-overlay').classList.remove('active');
+    document.getElementById('save-success-overlay').classList.remove('active');
+    showLanding();
 }
 
 function searchResult(item, url) {
@@ -2941,31 +3236,55 @@ function buildSystemPrompt() {
     return `You are ${state.mascotName} the ${MASCOTS[state.mascot]?.species || 'companion'}, a memory assistant helping ${state.name} identify something they cannot fully remember.
 
 PERSONALITY: ${personality}
-Important: Express your personality naturally but never let it slow down the questioning. One brief encouraging phrase per response at most.
+Express your personality briefly - one short phrase per response maximum. Never let personality slow the questioning.
 
 CRITICAL RULE - QUESTION FORMAT:
-- Ask ONLY pure yes/no questions. The user can only answer Yes, No, or Not sure.
+- Ask ONLY pure yes/no questions. Answers are: Yes, No, Not sure.
 - NEVER ask "or" questions like "Is it X or Y?" - this breaks the interface.
-- One question per response only.
-- Bad example: "Is it a land animal or a water animal?" (FORBIDDEN)
-- Good example: "Does it live on land?" (then follow up with water if no)
+- One question per response only. No lists. No explanations.
 
 QUESTION STYLE: ${styleGuide[state.simplicity]}
 
-SMART NARROWING STRATEGY:
-Use a binary decision tree. Start broad, eliminate large groups first:
-1. Living vs non-living, real vs fictional
-2. Size, region/continent, domesticated vs wild
-3. Specific physical traits (horn, stripes, wings, etc.)
-4. Behaviour, diet, habitat specifics
+GLOBAL INCLUSIVITY - EXTREMELY IMPORTANT:
+You must think globally and inclusively from the very start. The user may be thinking of something from ANY country, culture, religion, or language. Do NOT default to Western/English content.
+- Movies: consider Bollywood, Tamil cinema (Kollywood), Telugu (Tollywood), Korean, Japanese, Nigerian (Nollywood), Arabic, Persian, Turkish etc.
+- Music: consider Tamil, Hindi, K-pop, Afrobeats, Arabic pop, Latin, Punjabi bhangra, etc.
+- Food: consider dishes from all cuisines - South Asian, East Asian, Middle Eastern, African, Latin American etc.
+- Sports: consider cricket, kabaddi, sepak takraw, sumo, capoeira alongside football and basketball.
+- People: consider politicians, artists, athletes, religious figures from all countries and cultures.
+- Religion/spirituality: consider Hinduism, Islam, Buddhism, Sikhism, Judaism, Christianity, indigenous beliefs etc.
+- Languages: consider Tamil, Arabic, Swahili, Mandarin, Hindi, French, Spanish, Bengali etc.
+
+ALWAYS ask about cultural/geographic origin EARLY in questioning (within first 4 questions) to avoid going down the wrong path for 20 questions.
+
+SMART NARROWING STRATEGY (binary decision tree, max 21 questions):
+Questions 1-4: Establish fundamentals fast
+  - Real vs fictional
+  - Person/place/thing/concept
+  - Geographic or cultural origin (Asian? South Asian? Indian? Tamil Nadu?)
+  - Time period (before 2000? after 2000?)
+
+Questions 5-10: Medium specificity
+  - Genre, industry, religion, language
+  - Living/dead (for people), active/discontinued (for things)
+  - Famous internationally or mainly regionally?
+  - If category is Movies or TV Shows: ask which streaming platform early. Ask "Was it on Netflix?", then "Stan?", "Disney+?", "Prime Video?", "Hulu?", "Apple TV+?", "Paramount+?", "Peacock?", "HBO Max?", "Hotstar?" one at a time. This is a very strong signal - do not skip it.
+
+Questions 11-18: Narrow down specifics
+  - Physical traits, titles, associated words
+  - Specific country/state/city
+
+Questions 19-21: Final narrowing before forced guess
 
 GUESSING:
-After at least 6 questions, if confident, respond in EXACTLY this format:
-[One short encouraging sentence on its own line]
+- After 6+ questions, if reasonably confident: make your guess.
+- At question 18+: make your best guess regardless of confidence.
+- HARD LIMIT: At question 21, you MUST guess. No more questions.
+- Format EXACTLY:
+[One short encouraging sentence]
 GUESS: [first guess], [second guess], [third guess]
 
-At 15 questions with no confident guess, make your best guess anyway.
-If user says "not sure", accept it and move to a different angle.`;
+If user says "not sure", accept it and approach from a completely different angle. Never repeat a similar question.`;
 }
 
 // ============================================================
@@ -3028,16 +3347,6 @@ window.addEventListener('load', () => {
 // ============================================================
 // EXPOSE FUNCTIONS TO GLOBAL SCOPE (required for onclick attrs)
 // ============================================================
-function saveResult(item, btnIndex) {
-    saveToHistory(item, state.selectedCategory);
-    const btn = document.getElementById('save-btn-' + btnIndex);
-    if (btn) {
-        btn.textContent = 'Saved';
-        btn.classList.add('result-save-btn--saved');
-        btn.disabled = true;
-    }
-}
-
 function submitHint() {
     const hintInput = document.getElementById('hint-input');
     const hint = hintInput ? hintInput.value.trim() : '';
@@ -3049,6 +3358,9 @@ function submitHint() {
 }
 
 window.saveResult        = saveResult;
+window.closeSaveOverlay  = closeSaveOverlay;
+window.goHome            = goHome;
+window.goToResultSlide   = goToResultSlide;
 window.submitHint        = submitHint;
 window.selectMascot      = selectMascot;
 window.selectCompanion   = selectCompanion;
