@@ -380,33 +380,34 @@
         /* SETUP SHARED */
         .setup-header { text-align: center; }
 
-        /* LOGO IMAGE */
-        .site-logo {
-            height: auto;
-            width: auto;
-            display: block;
-        }
-
-        /* Setup page - big centred hero logo */
+        /* LOGO - transparent PNG, no backgrounds ever */
         .site-logo-hero {
-            height: 100px;
+            height: 90px;
             width: auto;
             display: block;
             margin: 0 auto;
         }
 
-        /* Top bar on inner pages - left aligned, compact */
         .site-logo-bar {
-            height: 40px;
+            height: 38px;
             width: auto;
             display: block;
         }
 
-        /* Info pages top bar - slightly smaller */
         .site-logo-sm {
-            height: 32px;
+            height: 28px;
             width: auto;
             display: block;
+        }
+
+        /* LANDING NAV */
+        .landing-nav {
+            width: 100%;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
         }
 
         .setup-tagline { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 32px; }
@@ -1377,6 +1378,75 @@
             .footer-bottom { flex-direction: column; gap: 6px; }
         }
 
+        /* ===================== SPLASH SCREEN ===================== */
+        .splash-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 36px;
+            z-index: 9999;
+            transition: opacity 0.6s ease;
+        }
+
+        .splash-screen.active { display: flex; }
+        .splash-screen.fade-out { opacity: 0; pointer-events: none; }
+
+        .splash-logo {
+            width: 260px;
+            height: auto;
+            animation: splash-breathe 4s ease-in-out forwards;
+        }
+
+        @keyframes splash-breathe {
+            0%   { filter: blur(18px); opacity: 0;    transform: scale(0.92); }
+            20%  { filter: blur(10px); opacity: 0.4;  transform: scale(0.96); }
+            50%  { filter: blur(4px);  opacity: 0.75; transform: scale(1.02); }
+            75%  { filter: blur(1px);  opacity: 0.92; transform: scale(1.0);  }
+            100% { filter: blur(0px);  opacity: 1;    transform: scale(1.0);  }
+        }
+
+        .splash-ring-wrap {
+            width: 60px;
+            height: 60px;
+            animation: splash-fade-in 0.4s ease 0.3s both;
+        }
+
+        @keyframes splash-fade-in {
+            from { opacity: 0; transform: scale(0.8); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .splash-ring {
+            width: 60px;
+            height: 60px;
+            transform: rotate(-90deg);
+        }
+
+        .splash-ring-track {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 3.5;
+        }
+
+        .splash-ring-fill {
+            fill: none;
+            stroke: #6EE7B7;
+            stroke-width: 3.5;
+            stroke-linecap: round;
+            stroke-dasharray: 163.4;
+            stroke-dashoffset: 163.4;
+            animation: splash-ring-progress 4.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+        }
+
+        @keyframes splash-ring-progress {
+            0%   { stroke-dashoffset: 163.4; }
+            100% { stroke-dashoffset: 0; }
+        }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -1428,8 +1498,19 @@
   </defs>
 </svg>
 
+<!-- ==================== SPLASH SCREEN ==================== -->
+<div id="splash-screen" class="splash-screen active">
+    <img src="logo.png" class="splash-logo" id="splash-logo" alt="FinditPal">
+    <div class="splash-ring-wrap">
+        <svg class="splash-ring" viewBox="0 0 60 60">
+            <circle class="splash-ring-track" cx="30" cy="30" r="26"/>
+            <circle class="splash-ring-fill" cx="30" cy="30" r="26" id="splash-ring-fill"/>
+        </svg>
+    </div>
+</div>
+
 <!-- ==================== SETUP PAGE ==================== -->
-<div id="setup-page" class="page active">
+<div id="setup-page" class="page">
     <div class="wizard-wrap">
 
         <!-- Logo -->
@@ -1625,6 +1706,13 @@
 
 <!-- ==================== LANDING PAGE ==================== -->
 <div id="landing-page" class="page">
+
+    <!-- Top nav -->
+    <div class="landing-nav">
+        <img src="logo.png" class="site-logo-bar" alt="FinditPal">
+        <button class="icon-btn" onclick="showPage('setup-page')" title="Settings">⚙️</button>
+    </div>
+
     <div class="landing-top">
         <div style="max-width:600px; margin:0 auto;">
             <div class="mascot-wrap" style="margin:0 0 16px;">
@@ -1687,9 +1775,7 @@
         </div>
     </footer>
 
-    <div style="position:fixed; top:16px; right:16px;">
-        <button class="icon-btn" onclick="showPage('setup-page')" title="Settings">⚙️</button>
-    </div>
+
 </div>
 
 <!-- ==================== INFO PAGES ==================== -->
@@ -2887,11 +2973,35 @@ function launchConfetti() {
 // ============================================================
 // INIT
 // ============================================================
+// ============================================================
+// SPLASH + INIT
+// ============================================================
+function showSplash(onDone) {
+    const splash = document.getElementById('splash-screen');
+    splash.classList.add('active');
+    splash.style.opacity = '1';
+
+    // At 4.6s start fading out, at 5s call onDone
+    setTimeout(() => {
+        splash.classList.add('fade-out');
+    }, 4400);
+
+    setTimeout(() => {
+        splash.classList.remove('active');
+        splash.classList.remove('fade-out');
+        onDone();
+    }, 5000);
+}
+
 window.addEventListener('load', () => {
-    const loaded = loadSettings();
-    if (loaded) {
-        showLanding();
-    }
+    showSplash(() => {
+        const loaded = loadSettings();
+        if (!loaded) {
+            showPage('setup-page');
+        } else {
+            showLanding();
+        }
+    });
 });
 
 // ============================================================
