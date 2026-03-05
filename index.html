@@ -2125,7 +2125,7 @@ const state = {
     btnSize: 'normal',
     theme: 'light',
     simplicity: 3,
-    apiKey: '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',
+    apiKey: '',
     selectedCategory: '',
     initialMemory: '',
     messages: [],
@@ -2553,14 +2553,16 @@ async function askNextQuestion() {
         state.messages.push({ role: 'user', content: msg });
     }
 
+    // --------------------------------------------------------
+    // PROXY WORKER URL - paste your Cloudflare Worker URL here
+    const PROXY_URL = 'https://finditpal-proxy.lbaranikumar.workers.dev';
+    // --------------------------------------------------------
+
     try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+        const res = await fetch(PROXY_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': state.apiKey,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 model: 'claude-sonnet-4-20250514',
