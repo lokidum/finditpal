@@ -1,0 +1,2943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinditPal – Find What's On Your Mind</title>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F9FAFB;
+            --surface: #FFFFFF;
+            --surface2: #EEF2FF;
+            --primary: #94A3E8;
+            --primary-dark: #6B82D6;
+            --primary-light: #E0E7FF;
+            --secondary: #A8E6CF;
+            --secondary-light: #D6F5EA;
+            --success: #A8E6CF;
+            --success-light: #D6F5EA;
+            --success-text: #1A5C3E;
+            --warning: #FFD3B6;
+            --warning-text: #7A3B00;
+            --no-btn: #F87171;
+            --no-btn-dark: #DC2626;
+            --accent: #FFD3B6;
+            --text: #2D3436;
+            --text-muted: #6B7280;
+            --border: #CBD5E1;
+            --shadow-sm: 0 2px 8px rgba(148,163,232,0.10);
+            --shadow: 0 4px 20px rgba(148,163,232,0.14);
+            --shadow-lg: 0 8px 40px rgba(148,163,232,0.18);
+            --radius-sm: 12px;
+            --radius: 20px;
+            --radius-lg: 28px;
+            --radius-xl: 40px;
+            --font-size: 18px;
+            --transition: 0.2s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg: #1A1D23;
+            --surface: #2D323B;
+            --surface2: #363C47;
+            --primary: #818CF8;
+            --primary-dark: #6366F1;
+            --primary-light: #2D2F5B;
+            --secondary: #6EE7B7;
+            --secondary-light: #1A3D30;
+            --success: #6EE7B7;
+            --success-light: #1A3D30;
+            --success-text: #D1FAE5;
+            --warning: #FFD3B6;
+            --warning-text: #FFD3B6;
+            --no-btn: #F87171;
+            --no-btn-dark: #EF4444;
+            --accent: #FFD3B6;
+            --text: #E2E8F0;
+            --text-muted: #94A3B8;
+            --border: #3F4756;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+            --shadow: 0 4px 20px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: var(--font-size); }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        /* PAGE SYSTEM */
+        .page { display: none; min-height: 100vh; flex-direction: column; align-items: center; }
+        .page.active { display: flex; }
+        #landing-page { justify-content: space-between; }
+
+        h1, h2, h3 { font-family: 'Baloo 2', cursive; line-height: 1.2; }
+
+        .container {
+            width: 100%;
+            max-width: 640px;
+            padding: 24px 20px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 28px;
+            box-shadow: var(--shadow);
+            border: 1.5px solid var(--border);
+        }
+
+        /* BUTTONS */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: var(--radius);
+            padding: 14px 28px;
+            transition: all var(--transition);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px rgba(148,163,232,0.35);
+        }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(148,163,232,0.45); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-secondary { background: var(--secondary-light); color: var(--secondary); }
+        .btn-secondary:hover { background: var(--secondary); color: white; transform: translateY(-2px); }
+
+        .btn-ghost { background: transparent; color: var(--text-muted); border: 2px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+
+        .btn-yes {
+            background: var(--success);
+            color: var(--success-text);
+            font-size: 1.2rem;
+            padding: 18px 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 14px rgba(168,230,207,0.35);
+            flex: 1;
+            font-weight: 800;
+        }
+        .btn-yes:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 6px 20px rgba(168,230,207,0.5); }
+
+        .btn-no {
+            background: var(--no-btn);
+            color: white;
+            font-size: 1.2rem;
+            padding: 18px 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 14px rgba(248,113,113,0.35);
+            flex: 1;
+            font-weight: 800;
+        }
+        .btn-no:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 6px 20px rgba(248,113,113,0.45); }
+
+        .btn-maybe {
+            background: var(--surface2);
+            color: var(--text-muted);
+            border: 2px dashed var(--border);
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-maybe:hover { background: var(--accent); color: var(--warning-text); border-color: var(--accent); }
+
+        [data-btnsize="large"] .btn { padding: 18px 36px; font-size: 1.1rem; }
+        [data-btnsize="xlarge"] .btn { padding: 22px 44px; font-size: 1.25rem; }
+        [data-btnsize="large"] .btn-yes, [data-btnsize="large"] .btn-no { padding: 22px 48px; font-size: 1.3rem; }
+        [data-btnsize="xlarge"] .btn-yes, [data-btnsize="xlarge"] .btn-no { padding: 26px 56px; font-size: 1.5rem; }
+
+        /* MASCOT */
+        .mascot-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .mascot-circle {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            box-shadow: var(--shadow-lg);
+            animation: mascot-bounce 3s ease-in-out infinite;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        [data-theme="dark"] .mascot-circle { background: #1A1D23; }
+
+        .mascot-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            mix-blend-mode: multiply;
+        }
+
+        [data-theme="dark"] .mascot-circle img { mix-blend-mode: screen; }
+
+        @keyframes mascot-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .speech-bubble {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--border);
+            max-width: 100%;
+            position: relative;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .speech-bubble::before {
+            content: '';
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-bottom-color: var(--border);
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            top: -11px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 7px solid transparent;
+            border-bottom-color: var(--surface);
+        }
+
+        /* WIZARD */
+        .wizard-wrap {
+            width: 100%;
+            max-width: 540px;
+            margin: 0 auto;
+            padding-bottom: 48px;
+        }
+
+        .wizard-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 24px 20px 8px;
+        }
+
+        .wstep {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--surface2);
+            border: 2.5px solid var(--border);
+            color: var(--text-muted);
+            font-family: 'Baloo 2', cursive;
+            font-weight: 800;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .wstep.active { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 0 0 4px var(--primary-light); }
+        .wstep.done { background: var(--success); border-color: var(--success); color: var(--success-text); }
+
+        .wstep-line {
+            flex: 1;
+            height: 3px;
+            background: var(--border);
+            max-width: 80px;
+            transition: background 0.3s;
+        }
+        .wstep-line.active { background: var(--primary); }
+
+        .wizard-panel { display: none; }
+        .wizard-panel.active { display: block; }
+
+        .wizard-panel-inner {
+            padding: 24px 20px;
+        }
+
+        .wizard-heading {
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .wizard-sub {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .wizard-btn { width: 100%; font-size: 1.05rem; padding: 16px; margin-top: 8px; }
+
+        /* COMPANION GRID */
+        .companion-preview {
+            background: var(--surface2);
+            border: 2px solid var(--primary);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            animation: slide-up 0.3s ease;
+        }
+
+        .companion-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .companion-card {
+            background: var(--surface);
+            border: 2.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .companion-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .companion-card.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(148,163,232,0.2);
+        }
+        .companion-card.pop {
+            animation: card-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes card-pop {
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.06); }
+            100% { transform: scale(1); }
+        }
+
+        .companion-emoji { font-size: 2rem; flex-shrink: 0; }
+
+        .companion-name {
+            font-family: 'Baloo 2', cursive;
+            font-weight: 800;
+            font-size: 1rem;
+            color: var(--text);
+            line-height: 1.1;
+        }
+
+        .companion-species {
+            font-size: 0.78rem;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .companion-desc {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* SETUP SHARED */
+        .setup-header { text-align: center; }
+
+        /* LOGO IMAGE */
+        .site-logo {
+            height: 56px;
+            width: auto;
+            display: block;
+            border-radius: 16px;
+            background: #111318;
+            padding: 6px 14px;
+        }
+
+        .site-logo-bar {
+            height: 36px;
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+
+        .site-logo-sm {
+            height: 28px;
+            padding: 3px 8px;
+            border-radius: 8px;
+        }
+
+        .setup-logo { display: flex; justify-content: center; margin-bottom: 4px; }
+        .footer-logo-wrap { display: flex; align-items: center; }
+
+        .setup-tagline { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 32px; }
+
+        .setup-section { margin-bottom: 28px; }
+
+        .setup-label {
+            font-family: 'Baloo 2', cursive;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .setup-input {
+            width: 100%;
+            background: var(--surface2);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 18px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            color: var(--text);
+            transition: border-color var(--transition);
+            outline: none;
+            resize: vertical;
+        }
+        .setup-input:focus { border-color: var(--primary); }
+        .setup-input::placeholder { color: var(--text-muted); }
+
+        .slider-wrap { display: flex; align-items: center; gap: 12px; }
+        .slider-label-sm { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--border);
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255,107,61,0.4);
+        }
+
+        .toggle-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .toggle-btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            border: 2px solid var(--border);
+            background: var(--surface2);
+            color: var(--text-muted);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .toggle-btn.active, .toggle-btn:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+
+        .mascot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+        .mascot-card {
+            background: var(--surface2);
+            border: 2.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .mascot-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .mascot-card.selected { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 3px rgba(255,107,61,0.15); }
+        .mascot-card .mascot-emoji { font-size: 2.4rem; display: block; margin-bottom: 6px; }
+        .mascot-card .mascot-name { font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 0.9rem; color: var(--text); }
+
+        /* LANDING PAGE */
+        .landing-top {
+            background: linear-gradient(160deg, var(--primary-light) 0%, var(--surface2) 60%, var(--bg) 100%);
+            padding: 32px 20px 24px;
+            text-align: center;
+            border-bottom-left-radius: 32px;
+            border-bottom-right-radius: 32px;
+            width: 100%;
+        }
+
+        .day-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+
+        .day-btn {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 10px 22px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--transition);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+        .day-btn:hover { border-color: var(--primary); background: var(--primary); color: white; transform: translateY(-2px); }
+
+        .help-section { padding: 24px 20px; max-width: 640px; width: 100%; margin: 0 auto; }
+
+        .input-wrap { display: flex; gap: 10px; margin-bottom: 20px; }
+
+        .text-input {
+            flex: 1;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            color: var(--text);
+            outline: none;
+            transition: border-color var(--transition);
+        }
+        .text-input:focus { border-color: var(--primary); }
+        .text-input::placeholder { color: var(--text-muted); }
+
+        .voice-btn {
+            background: var(--surface2);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            font-size: 1.4rem;
+            cursor: not-allowed;
+            transition: all var(--transition);
+            color: var(--text-muted);
+            position: relative;
+            opacity: 0.7;
+        }
+        .voice-badge {
+            position: absolute;
+            top: -9px;
+            right: -9px;
+            background: var(--warning);
+            color: white;
+            font-size: 0.55rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-family: 'Nunito', sans-serif;
+            white-space: nowrap;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* CATEGORIES */
+        .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+        .category-btn {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .category-btn:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .category-btn .cat-emoji { font-size: 2rem; }
+        .category-btn .cat-name { font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 0.95rem; color: var(--text); }
+
+        /* TOP BAR */
+        .top-bar {
+            width: 100%;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .top-bar-logo { font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1.4rem; color: var(--primary); }
+
+        .icon-btn {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all var(--transition);
+        }
+        .icon-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+
+        /* QUESTION PAGE */
+        .question-page-inner {
+            width: 100%;
+            max-width: 640px;
+            padding: 24px 20px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .question-progress { display: flex; gap: 6px; justify-content: center; }
+        .progress-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
+        .progress-dot.filled { background: var(--primary); }
+
+        .question-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-family: 'Baloo 2', cursive;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 4px 16px;
+            border-radius: 20px;
+        }
+
+        .answer-row { display: flex; gap: 14px; width: 100%; }
+
+        /* RESULTS */
+        .result-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: all var(--transition);
+            margin-bottom: 12px;
+        }
+        .result-card:hover { border-color: var(--primary); box-shadow: var(--shadow); }
+
+        .result-card-top {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 20px 14px;
+            cursor: pointer;
+        }
+        .result-card-top:hover .result-name { color: var(--primary); }
+
+        .result-links {
+            display: flex;
+            border-top: 1.5px solid var(--border);
+        }
+
+        .result-link {
+            flex: 1;
+            text-align: center;
+            padding: 10px 6px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            transition: background var(--transition);
+            border-right: 1px solid var(--border);
+        }
+        .result-link:last-child { border-right: none; }
+        .result-link:hover { background: var(--primary-light); }
+
+        .result-num {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-family: 'Baloo 2', cursive;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .result-name { font-family: 'Baloo 2', cursive; font-weight: 700; font-size: 1.1rem; flex: 1; transition: color var(--transition); cursor: pointer; }
+        .result-name:hover { color: var(--primary); }
+
+        .result-save-btn {
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all var(--transition);
+        }
+        .result-save-btn:hover {
+            background: var(--secondary-light);
+            border-color: var(--secondary);
+            color: var(--success-text);
+        }
+        .result-save-btn--saved {
+            background: var(--secondary-light);
+            border-color: var(--secondary);
+            color: var(--success-text);
+            cursor: default;
+        }
+
+        /* HINT ADDON */
+        .hint-addon {
+            width: 100%;
+            background: var(--surface2);
+            border: 1.5px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 12px 14px;
+            margin-top: 4px;
+        }
+
+        .hint-addon-label {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hint-addon-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .hint-input {
+            flex: 1;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.88rem;
+            color: var(--text);
+            outline: none;
+            transition: border-color var(--transition);
+        }
+        .hint-input:focus { border-color: var(--primary); }
+        .hint-input::placeholder { color: var(--text-muted); }
+
+        .hint-submit-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 10px 18px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background var(--transition);
+            white-space: nowrap;
+        }
+        .hint-submit-btn:hover { background: var(--primary-dark); }
+
+        /* ANSWER SUB ROW (not sure + neither) */
+        .answer-sub-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .btn-neither {
+            background: var(--surface2);
+            color: var(--text-muted);
+            border: 2px dashed var(--border);
+            flex: 1;
+            padding: 12px;
+            font-size: 0.92rem;
+            border-radius: var(--radius);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .btn-neither:hover { background: var(--surface); border-color: var(--text-muted); color: var(--text); }
+
+        /* LOADING DOTS */
+        .thinking-wrap { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 12px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); animation: dot-bounce 1.2s ease-in-out infinite; }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dot-bounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* CONFETTI */
+        .confetti-piece {
+            position: fixed;
+            top: -10px;
+            pointer-events: none;
+            animation: confetti-fall linear forwards;
+            z-index: 9999;
+        }
+        @keyframes confetti-fall {
+            to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* ENTER ANIM */
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page.active > * { animation: slide-up 0.3s ease; }
+
+        /* ERROR */
+        .error-msg {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1.5px solid #FFCDD2;
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: none;
+            margin-top: 12px;
+        }
+
+        .api-note { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; }
+
+        /* MASCOT COLORS - kept for fallback */
+        .mascot-zebra, .mascot-penguin, .mascot-panda,
+        .mascot-dog, .mascot-cat, .mascot-monkey, .mascot-dragon { background: #ffffff; }
+        [data-theme="dark"] .mascot-zebra, [data-theme="dark"] .mascot-penguin,
+        [data-theme="dark"] .mascot-panda, [data-theme="dark"] .mascot-dog,
+        [data-theme="dark"] .mascot-cat, [data-theme="dark"] .mascot-monkey,
+        [data-theme="dark"] .mascot-dragon { background: #1A1D23; }
+
+        .companion-emoji {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: #ffffff;
+        }
+        [data-theme="dark"] .companion-emoji { background: #1A1D23; }
+
+        .companion-emoji img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            mix-blend-mode: multiply;
+        }
+        [data-theme="dark"] .companion-emoji img { mix-blend-mode: screen; }
+
+        .comp-preview-mascot {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: #ffffff;
+            animation: mascot-bounce 2s ease-in-out infinite;
+        }
+        [data-theme="dark"] .comp-preview-mascot { background: #1A1D23; }
+
+        .comp-preview-mascot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            mix-blend-mode: multiply;
+        }
+        [data-theme="dark"] .comp-preview-mascot img { mix-blend-mode: screen; }
+
+        /* COLOUR BLINDNESS */
+        .cb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+        .cb-btn {
+            background: var(--surface2);
+            border: 2.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .cb-btn:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .cb-btn.active { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 3px rgba(255,107,61,0.15); }
+
+        .cb-swatch {
+            width: 44px;
+            height: 20px;
+            border-radius: 6px;
+            display: block;
+        }
+        .cb-swatch-none    { background: linear-gradient(90deg, #94A3E8, #A8E6CF, #FFD3B6); }
+        .cb-swatch-protan  { background: linear-gradient(90deg, #6B7D00, #94A3E8, #A8E6CF); }
+        .cb-swatch-deutan  { background: linear-gradient(90deg, #8B8000, #7070CC, #A8E6CF); }
+        .cb-swatch-tritan  { background: linear-gradient(90deg, #94A3E8, #007070, #008080); }
+        .cb-swatch-achroma { background: linear-gradient(90deg, #999, #666, #CCC); }
+
+        .cb-name {
+            font-family: 'Baloo 2', cursive;
+            font-weight: 700;
+            font-size: 0.78rem;
+            color: var(--text);
+            line-height: 1.3;
+        }
+        .cb-name small { font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 0.7rem; color: var(--text-muted); }
+
+        /* HISTORY CAROUSEL */
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .history-title {
+            font-family: 'Baloo 2', cursive;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .history-clear-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 8px;
+            transition: all var(--transition);
+        }
+        .history-clear-btn:hover { background: #FF525220; color: #FF5252; }
+
+        .carousel-track-wrap {
+            overflow-x: auto;
+            overflow-y: visible;
+            padding-bottom: 10px;
+            cursor: grab;
+            user-select: none;
+            scrollbar-width: none;
+        }
+        .carousel-track-wrap::-webkit-scrollbar { display: none; }
+        .carousel-track-wrap.dragging { cursor: grabbing; }
+
+        .carousel-track {
+            display: flex;
+            gap: 12px;
+            width: max-content;
+            padding: 4px 2px 4px 2px;
+        }
+
+        .history-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            min-width: 148px;
+            max-width: 180px;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .history-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .history-card-emoji {
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+
+        .history-card-name {
+            font-family: 'Baloo 2', cursive;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text);
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .history-card-meta {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .history-card-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--surface2);
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all var(--transition);
+            line-height: 1;
+        }
+        .history-card:hover .history-card-delete { display: flex; }
+        .history-card-delete:hover { background: #FF5252; color: white; }
+
+        /* CONTACT CHIPS */
+        .contact-chips {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .contact-chip {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 8px 18px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all var(--transition);
+        }
+        .contact-chip:hover { background: var(--primary); color: white; transform: translateY(-2px); }
+
+        /* FOOTER */
+        .site-footer {
+            width: 100%;
+            background: var(--surface);
+            border-top: 1.5px solid var(--border);
+            margin-top: auto;
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .footer-inner {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 14px 28px 12px;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .footer-nav-link {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 3px 14px;
+            transition: color var(--transition);
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            position: relative;
+        }
+
+        .footer-nav-link:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 10px;
+            width: 1px;
+            background: var(--border);
+        }
+
+        .footer-nav-link:hover { color: var(--primary); }
+
+        .footer-rule {
+            height: 1px;
+            background: var(--border);
+            margin-bottom: 10px;
+        }
+
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .footer-brand {
+            font-family: 'Baloo 2', cursive;
+            font-weight: 800;
+            font-size: 0.8rem;
+            color: var(--primary);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding-right: 16px;
+            margin-right: 16px;
+            border-right: 1px solid var(--border);
+        }
+
+        .footer-copy {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .footer-copy:not(:last-child) {
+            padding-right: 14px;
+            margin-right: 14px;
+            border-right: 1px solid var(--border);
+        }
+
+        @media (max-width: 600px) {
+            .footer-nav-link { font-size: 0.72rem; padding: 3px 10px; }
+            .footer-bottom { flex-wrap: wrap; gap: 6px; justify-content: center; }
+            .footer-brand { border-right: none; padding-right: 0; margin-right: 0; }
+            .footer-copy:not(:last-child) { border-right: none; padding-right: 0; margin-right: 0; }
+        }
+
+        /* INFO PAGES */
+        .info-page-wrap {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+            padding-bottom: 48px;
+        }
+
+        .info-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+        }
+
+        .info-hero {
+            padding: 40px 24px 36px;
+            text-align: center;
+            border-radius: 0 0 32px 32px;
+            margin-bottom: 32px;
+        }
+
+        .info-hero-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .info-hero-title {
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .info-hero-sub {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            max-width: 420px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .info-body {
+            padding: 0 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .info-para {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            line-height: 1.75;
+            margin: 0;
+        }
+
+        .info-subheading {
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: 8px 0 0;
+        }
+
+        .info-callout {
+            background: var(--surface2);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 16px 18px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .info-callout .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+        .info-callout div {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            font-style: italic;
+        }
+
+        .info-stat-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 8px 0;
+        }
+
+        .info-stat {
+            background: var(--primary-light);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            text-align: center;
+            min-width: 120px;
+            flex: 1;
+        }
+
+        .info-stat-num {
+            display: block;
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .info-stat-label {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        /* AUDIENCE CARDS */
+        .audience-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            transition: all var(--transition);
+        }
+        .audience-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+
+        .audience-icon { font-size: 1.6rem; flex-shrink: 0; margin-top: 2px; }
+
+        .audience-card strong { font-size: 0.92rem; color: var(--text); display: block; margin-bottom: 4px; }
+        .audience-card p { font-size: 0.83rem; color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+        /* HOW STEPS */
+        .how-step {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+        }
+
+        .how-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-family: 'Baloo 2', cursive;
+            font-weight: 800;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .how-step strong { font-size: 0.92rem; color: var(--text); display: block; margin-bottom: 4px; }
+        .how-step p { font-size: 0.83rem; color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+        /* ACCESSIBILITY ITEMS */
+        .access-item {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .access-item:last-of-type { border-bottom: none; }
+
+        .access-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 2px; }
+        .access-item strong { font-size: 0.92rem; color: var(--text); display: block; margin-bottom: 4px; }
+        .access-item p { font-size: 0.83rem; color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+        /* ROADMAP */
+        .roadmap-item {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 14px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .roadmap-item:last-of-type { border-bottom: none; }
+
+        .roadmap-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 5px;
+        }
+        .done-dot     { background: var(--success); }
+        .upcoming-dot { background: var(--primary); }
+        .future-dot   { background: var(--border); border: 2px solid var(--text-muted); }
+
+        .roadmap-item strong { font-size: 0.92rem; color: var(--text); display: block; margin-bottom: 4px; }
+        .roadmap-item p { font-size: 0.83rem; color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+        @media (max-width: 600px) {
+            .footer-nav { gap: 8px; }
+            .info-stat-row { flex-direction: column; }
+            .footer-bottom { flex-direction: column; gap: 6px; }
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        @media (max-width: 420px) {
+            .mascot-grid { grid-template-columns: repeat(2, 1fr); }
+            .category-grid { grid-template-columns: repeat(2, 1fr); }
+            .answer-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SVG colour blindness filters - hidden, referenced by CSS filter -->
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+  <defs>
+    <!-- Protanopia: red-blind -->
+    <filter id="cb-protanopia">
+      <feColorMatrix type="matrix" values="
+        0.567 0.433 0     0 0
+        0.558 0.442 0     0 0
+        0     0.242 0.758 0 0
+        0     0     0     1 0"/>
+    </filter>
+    <!-- Deuteranopia: green-blind -->
+    <filter id="cb-deuteranopia">
+      <feColorMatrix type="matrix" values="
+        0.625 0.375 0   0 0
+        0.7   0.3   0   0 0
+        0     0.3   0.7 0 0
+        0     0     0   1 0"/>
+    </filter>
+    <!-- Tritanopia: blue-yellow blind -->
+    <filter id="cb-tritanopia">
+      <feColorMatrix type="matrix" values="
+        0.95  0.05  0     0 0
+        0     0.433 0.567 0 0
+        0     0.475 0.525 0 0
+        0     0     0     1 0"/>
+    </filter>
+    <!-- Achromatopsia: full greyscale -->
+    <filter id="cb-achromatopsia">
+      <feColorMatrix type="matrix" values="
+        0.299 0.587 0.114 0 0
+        0.299 0.587 0.114 0 0
+        0.299 0.587 0.114 0 0
+        0     0     0     1 0"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- ==================== SETUP PAGE ==================== -->
+<div id="setup-page" class="page active">
+    <div class="wizard-wrap">
+
+        <!-- Logo -->
+        <div style="text-align:center; padding:28px 20px 0;">
+            <img src="logo.png" class="site-logo" alt="FinditPal">
+            <p class="setup-tagline">Find what's on the tip of your tongue</p>
+        </div>
+
+        <!-- Step indicators -->
+        <div class="wizard-steps">
+            <div class="wstep active" id="wstep-1">1</div>
+            <div class="wstep-line" id="wline-1"></div>
+            <div class="wstep" id="wstep-2">2</div>
+            <div class="wstep-line" id="wline-2"></div>
+            <div class="wstep" id="wstep-3">3</div>
+        </div>
+
+        <!-- ---- STEP 1: Name + API ---- -->
+        <div class="wizard-panel active" id="wizard-1">
+            <div class="wizard-panel-inner">
+                <div class="wizard-heading">👋 First, what's your name?</div>
+                <p class="wizard-sub">Your pal will use this to greet you every time.</p>
+                <input class="setup-input" id="setup-name" type="text" placeholder="Enter your name..." maxlength="30" onkeydown="if(event.key==='Enter') wizardNext(1)">
+
+
+
+                <div id="wizard-1-error" class="error-msg">Please enter your name and API key to continue.</div>
+                <button class="btn btn-primary wizard-btn" onclick="wizardNext(1)">Choose my pal →</button>
+            </div>
+        </div>
+
+        <!-- ---- STEP 2: Choose companion ---- -->
+        <div class="wizard-panel" id="wizard-2">
+            <div class="wizard-panel-inner">
+                <div class="wizard-heading">🐾 Choose your companion</div>
+                <p class="wizard-sub">Click one to meet them. They'll be with you every step of the way.</p>
+
+                <!-- Preview bubble at top -->
+                <div id="companion-preview" class="companion-preview" style="display:none;">
+                    <div class="comp-preview-mascot" id="comp-preview-mascot"></div>
+                    <div class="speech-bubble" id="comp-preview-bubble" style="font-size:0.9rem; padding:14px 18px;"></div>
+                </div>
+
+                <div class="companion-grid" id="companion-grid">
+                    <div class="companion-card" data-mascot="panda" onclick="selectCompanion(this)">
+                        <div class="companion-emoji"><img src="panda.png" alt="Dumpling"></div>
+                        <div class="companion-info">
+                            <div class="companion-name">Dumpling</div>
+                            <div class="companion-species">the Panda</div>
+                            <div class="companion-desc">Soft, sweet and always in your corner</div>
+                        </div>
+                    </div>
+                    <div class="companion-card" data-mascot="dragon" onclick="selectCompanion(this)">
+                        <div class="companion-emoji"><img src="dragon.png" alt="Noodle"></div>
+                        <div class="companion-info">
+                            <div class="companion-name">Noodle</div>
+                            <div class="companion-species">the Dragon</div>
+                            <div class="companion-desc">Wiggly, wild and bursting with energy</div>
+                        </div>
+                    </div>
+                    <div class="companion-card" data-mascot="dog" onclick="selectCompanion(this)">
+                        <div class="companion-emoji"><img src="dog.png" alt="Dino"></div>
+                        <div class="companion-info">
+                            <div class="companion-name">Dino</div>
+                            <div class="companion-species">the Dog</div>
+                            <div class="companion-desc">Dependable, devoted and tail-always-wagging</div>
+                        </div>
+                    </div>
+                    <div class="companion-card" data-mascot="cat" onclick="selectCompanion(this)">
+                        <div class="companion-emoji"><img src="cat.png" alt="Cleo"></div>
+                        <div class="companion-info">
+                            <div class="companion-name">Cleo</div>
+                            <div class="companion-species">the Cat</div>
+                            <div class="companion-desc">Cool, clever and quietly confident</div>
+                        </div>
+                    </div>
+                    <div class="companion-card" data-mascot="penguin" onclick="selectCompanion(this)">
+                        <div class="companion-emoji"><img src="penguin.png" alt="Percy"></div>
+                        <div class="companion-info">
+                            <div class="companion-name">Percy</div>
+                            <div class="companion-species">the Penguin</div>
+                            <div class="companion-desc">Cheerful, waddly and wonderfully upbeat</div>
+                        </div>
+                    </div>
+                    <div class="companion-card" data-mascot="zebra" onclick="selectCompanion(this)">
+                        <div class="companion-emoji"><img src="zebra.png" alt="Ziggy"></div>
+                        <div class="companion-info">
+                            <div class="companion-name">Ziggy</div>
+                            <div class="companion-species">the Zebra</div>
+                            <div class="companion-desc">Bold, brave and ready for adventure</div>
+                        </div>
+                    </div>
+                    <div class="companion-card" data-mascot="monkey" onclick="selectCompanion(this)">
+                        <div class="companion-emoji"><img src="monkey.png" alt="Mochi"></div>
+                        <div class="companion-info">
+                            <div class="companion-name">Mochi</div>
+                            <div class="companion-species">the Monkey</div>
+                            <div class="companion-desc">Curious, bouncy and loves a mystery</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="wizard-2-error" class="error-msg">Pick a companion to continue!</div>
+                <div style="display:flex; gap:12px; margin-top:20px;">
+                    <button class="btn btn-ghost" onclick="wizardBack(2)" style="flex:1;">← Back</button>
+                    <button class="btn btn-primary wizard-btn" onclick="wizardNext(2)" style="flex:2;">Looks good! →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---- STEP 3: Accessibility ---- -->
+        <div class="wizard-panel" id="wizard-3">
+            <div class="wizard-panel-inner">
+                <div class="wizard-heading">✨ Make it yours</div>
+                <p class="wizard-sub">Everything is set to a comfortable default. Change anything that helps.</p>
+
+                <div class="setup-section">
+                    <div class="setup-label">🔤 Text Size</div>
+                    <div class="slider-wrap">
+                        <span class="slider-label-sm" style="font-size:0.85rem;">A</span>
+                        <input type="range" id="setup-fontsize" min="14" max="26" value="18" step="1">
+                        <span class="slider-label-sm" style="font-size:1.3rem;">A</span>
+                    </div>
+                    <div style="text-align:center; margin-top:8px; font-size:0.82rem; color:var(--text-muted);">
+                        Preview: <span id="font-preview" style="font-weight:600;">This is how text will look</span>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <div class="setup-label">🖱️ Button Size</div>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-btnsize="normal" onclick="selectToggle(this, 'btnsize')">Normal</button>
+                        <button class="toggle-btn" data-btnsize="large" onclick="selectToggle(this, 'btnsize')">Large</button>
+                        <button class="toggle-btn" data-btnsize="xlarge" onclick="selectToggle(this, 'btnsize')">Extra Large</button>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <div class="setup-label">🎨 Appearance</div>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-theme-val="light" onclick="selectTheme(this)">☀️ Light</button>
+                        <button class="toggle-btn" data-theme-val="dark" onclick="selectTheme(this)">🌙 Dark</button>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <div class="setup-label">👁️ Colour Blindness Mode</div>
+                    <div class="cb-grid">
+                        <button class="cb-btn active" data-cb="none" onclick="selectColourBlind(this)">
+                            <span class="cb-swatch cb-swatch-none"></span>
+                            <span class="cb-name">None</span>
+                        </button>
+                        <button class="cb-btn" data-cb="protanopia" onclick="selectColourBlind(this)">
+                            <span class="cb-swatch cb-swatch-protan"></span>
+                            <span class="cb-name">Red-Green<br><small>Protanopia</small></span>
+                        </button>
+                        <button class="cb-btn" data-cb="deuteranopia" onclick="selectColourBlind(this)">
+                            <span class="cb-swatch cb-swatch-deutan"></span>
+                            <span class="cb-name">Red-Green<br><small>Deuteranopia</small></span>
+                        </button>
+                        <button class="cb-btn" data-cb="tritanopia" onclick="selectColourBlind(this)">
+                            <span class="cb-swatch cb-swatch-tritan"></span>
+                            <span class="cb-name">Blue-Yellow<br><small>Tritanopia</small></span>
+                        </button>
+                        <button class="cb-btn" data-cb="achromatopsia" onclick="selectColourBlind(this)">
+                            <span class="cb-swatch cb-swatch-achroma"></span>
+                            <span class="cb-name">Greyscale<br><small>Achromatopsia</small></span>
+                        </button>
+                    </div>
+                    <div id="cb-preview-note" style="font-size:0.78rem; color:var(--text-muted); margin-top:10px; text-align:center; font-style:italic;"></div>
+                </div>
+
+                <div class="setup-section">
+                    <div class="setup-label">💬 How do you like your questions?</div>
+                    <p class="wizard-sub" style="margin-bottom:12px;">Drag the slider to change how simple or detailed the questions are.</p>
+                    <div class="slider-wrap">
+                        <span class="slider-label-sm" style="font-size:0.72rem; min-width:52px;">Detailed</span>
+                        <input type="range" id="setup-simplicity" min="1" max="5" value="3" step="1">
+                        <span class="slider-label-sm" style="font-size:0.72rem; min-width:40px;">Simple</span>
+                    </div>
+                    <div id="simplicity-preview" style="text-align:center; margin-top:8px; font-size:0.82rem; color:var(--text-muted); font-style:italic;"></div>
+                </div>
+
+                <div style="display:flex; gap:12px; margin-top:24px;">
+                    <button class="btn btn-ghost" onclick="wizardBack(3)" style="flex:1;">← Back</button>
+                    <button class="btn btn-primary wizard-btn" onclick="saveSetup()" style="flex:2;">Let's go! 🚀</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== LANDING PAGE ==================== -->
+<div id="landing-page" class="page">
+    <div class="landing-top">
+        <div style="max-width:600px; margin:0 auto;">
+            <div class="mascot-wrap" style="margin:0 0 16px;">
+                <div class="mascot-circle mascot-panda" id="landing-mascot">🐼</div>
+                <div class="speech-bubble" id="landing-bubble">
+                    Hi there! How has your day been? 😊
+                </div>
+            </div>
+            <div class="day-buttons" id="day-buttons">
+                <button class="day-btn" onclick="respondDay('great')">Really good! 😊</button>
+                <button class="day-btn" onclick="respondDay('okay')">It's okay 😐</button>
+                <button class="day-btn" onclick="respondDay('bad')">Not great 😔</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="help-section" id="help-input-section" style="display:none;">
+        <div class="input-wrap">
+            <input class="text-input" id="landing-text-input" placeholder="Tell me what you're thinking of..." onkeydown="if(event.key==='Enter') startFromText()">
+            <button class="btn btn-primary" onclick="startFromText()">Go 🔍</button>
+            <div style="position:relative; display:inline-flex;">
+                <button class="voice-btn" disabled>🎙️</button>
+                <span class="voice-badge">Coming soon</span>
+            </div>
+        </div>
+
+        <!-- HISTORY CAROUSEL -->
+        <div id="history-section" style="display:none; margin-bottom:20px;">
+            <div class="history-header">
+                <span class="history-title">🕐 Previously found</span>
+                <button class="history-clear-btn" onclick="clearHistory()">Clear all</button>
+            </div>
+            <div class="carousel-track-wrap">
+                <div class="carousel-track" id="carousel-track"></div>
+            </div>
+        </div>
+
+        <div class="divider">or browse by category</div>
+        <div class="category-grid" id="landing-categories"></div>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <nav class="footer-links">
+                <button class="footer-nav-link" onclick="showInfoPage('about-page')">What is FinditPal</button>
+                <button class="footer-nav-link" onclick="showInfoPage('problem-page')">The Problem</button>
+                <button class="footer-nav-link" onclick="showInfoPage('audience-page')">Who It's For</button>
+                <button class="footer-nav-link" onclick="showInfoPage('how-page')">How It Works</button>
+                <button class="footer-nav-link" onclick="showInfoPage('access-page')">Accessibility</button>
+                <button class="footer-nav-link" onclick="showInfoPage('roadmap-page')">Roadmap</button>
+                <button class="footer-nav-link" onclick="showInfoPage('contact-page')">Contact</button>
+            </nav>
+            <div class="footer-rule"></div>
+            <div class="footer-bottom">
+                <span class="footer-brand">FinditPal</span>
+                <span class="footer-copy">University of Canberra</span>
+                <span class="footer-copy">2025. All rights reserved.</span>
+            </div>
+        </div>
+    </footer>
+
+    <div style="position:fixed; top:16px; right:16px;">
+        <button class="icon-btn" onclick="showPage('setup-page')" title="Settings">⚙️</button>
+    </div>
+</div>
+
+<!-- ==================== INFO PAGES ==================== -->
+
+<!-- ABOUT -->
+<div id="about-page" class="page">
+    <div class="info-page-wrap">
+        <div class="info-top-bar">
+            <button class="icon-btn" onclick="showPage('landing-page')">←</button>
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <div style="width:42px;"></div>
+        </div>
+        <div class="info-hero" style="background: linear-gradient(135deg, var(--primary-light), var(--surface2));">
+            <div class="info-hero-icon">💡</div>
+            <h1 class="info-hero-title">What is FinditPal?</h1>
+            <p class="info-hero-sub">An AI memory assistant built for everyone, especially those who need it most.</p>
+        </div>
+        <div class="info-body">
+            <p class="info-para">FinditPal is an AI-powered memory assistant designed from the ground up for people who struggle with keyword recall. Instead of asking you to remember the exact name of something, it asks you simple yes or no questions until it figures out what you mean.</p>
+            <p class="info-para">Think of it as a patient, friendly helper sitting next to you, asking "Was it an animal? Was it big? Did it have a horn?" until the answer clicks into place.</p>
+            <div class="info-callout">
+                <span class="callout-icon">🎯</span>
+                <div>The name FinditPal comes from "tip of the tongue", that frustrating feeling when you know something but just can't get the word out. We built a tool that meets you exactly there.</div>
+            </div>
+            <h2 class="info-subheading">Why this matters</h2>
+            <p class="info-para">Standard search engines require you to know what you're looking for before you start. FinditPal flips that around entirely. You don't need the right words. You just need to answer questions.</p>
+            <p class="info-para">The AI behind FinditPal is Claude by Anthropic, one of the most capable and safety-focused language models available. It asks structured questions, learns from each answer, and narrows down to a result across millions of possible things, from movies to animals to countries to songs.</p>
+            <div class="info-stat-row">
+                <div class="info-stat"><span class="info-stat-num">10</span><span class="info-stat-label">questions on average to find a result</span></div>
+                <div class="info-stat"><span class="info-stat-num">16+</span><span class="info-stat-label">categories supported</span></div>
+                <div class="info-stat"><span class="info-stat-num">6</span><span class="info-stat-label">accessibility settings built in</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- THE PROBLEM -->
+<div id="problem-page" class="page">
+    <div class="info-page-wrap">
+        <div class="info-top-bar">
+            <button class="icon-btn" onclick="showPage('landing-page')">←</button>
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <div style="width:42px;"></div>
+        </div>
+        <div class="info-hero" style="background: linear-gradient(135deg, #EEF2FF, var(--surface2));">
+            <div class="info-hero-icon">🔍</div>
+            <h1 class="info-hero-title">The Problem We're Solving</h1>
+            <p class="info-hero-sub">Search was never designed for people who can't remember the exact words.</p>
+        </div>
+        <div class="info-body">
+            <p class="info-para">Traditional search engines are built on one assumption: you already know what you're looking for. Type in the right words, get the right results. But what happens when you can't retrieve the words in the first place?</p>
+            <p class="info-para">For people with Global Developmental Delay (GDD), cognitive processing differences, memory impairments, or learning difficulties, this gap is not just frustrating. It's a wall. GDD affects roughly 1 to 3% of the global population and significantly impacts how people retrieve, process, and communicate information.</p>
+            <div class="info-callout">
+                <span class="callout-icon">📊</span>
+                <div>Research published in the <em>Journal of Intellectual Disability Research</em> (2021) found that individuals with intellectual disability use digital technology significantly less than the general population, not due to lack of interest, but due to interface barriers, recall demands, and frustrating search experiences.</div>
+            </div>
+            <h2 class="info-subheading">A concrete example</h2>
+            <p class="info-para">Imagine trying to find the movie "Love Actually" but only remembering that it had the word "Love" in the title and that it was a romantic film. Searching "love movie" on Google returns hundreds of irrelevant results. There is no way to narrow it down without the exact title.</p>
+            <p class="info-para">FinditPal would ask you: "Was it a romance? Was it set around Christmas? Did it have multiple storylines?" A few questions later, it finds it for you.</p>
+            <div class="info-stat-row">
+                <div class="info-stat"><span class="info-stat-num">1 in 6</span><span class="info-stat-label">Australians live with disability</span></div>
+                <div class="info-stat"><span class="info-stat-num">~3%</span><span class="info-stat-label">have an intellectual disability diagnosis</span></div>
+                <div class="info-stat"><span class="info-stat-num">450M+</span><span class="info-stat-label">people globally with cognitive conditions</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- WHO IT'S FOR -->
+<div id="audience-page" class="page">
+    <div class="info-page-wrap">
+        <div class="info-top-bar">
+            <button class="icon-btn" onclick="showPage('landing-page')">←</button>
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <div style="width:42px;"></div>
+        </div>
+        <div class="info-hero" style="background: linear-gradient(135deg, var(--secondary-light), var(--surface2));">
+            <div class="info-hero-icon">🤝</div>
+            <h1 class="info-hero-title">Who FinditPal is Built For</h1>
+            <p class="info-hero-sub">Designed with specific communities in mind. Open to everyone.</p>
+        </div>
+        <div class="info-body">
+            <p class="info-para">FinditPal was built with specific people in mind, though anyone who has ever had something stuck on the tip of their tongue will find it useful.</p>
+            <div class="audience-card"><div class="audience-icon">🧩</div><div><strong>People with Global Developmental Delay (GDD)</strong><p>GDD affects language retrieval and working memory. FinditPal removes the need to produce the right keyword and replaces it with simple yes or no responses.</p></div></div>
+            <div class="audience-card"><div class="audience-icon">🧠</div><div><strong>Individuals with intellectual or cognitive disabilities</strong><p>Standard search interfaces assume literacy, precision, and memory capacity. FinditPal assumes none of those things. It guides rather than demands.</p></div></div>
+            <div class="audience-card"><div class="audience-icon">📖</div><div><strong>People with dyslexia</strong><p>Spelling uncertainty makes keyword search unreliable. When you can't type the word accurately, you can't find what you're looking for. FinditPal bypasses this entirely.</p></div></div>
+            <div class="audience-card"><div class="audience-icon">👴</div><div><strong>Older adults with memory changes</strong><p>Over 400,000 Australians live with dementia, projected to exceed 800,000 by 2058. Age-related recall difficulty is one of the most common barriers to independent technology use.</p></div></div>
+            <div class="audience-card"><div class="audience-icon">⚡</div><div><strong>People with ADHD or executive function differences</strong><p>Word retrieval under cognitive load is inconsistent with ADHD. A conversational, question-based interface reduces that load significantly.</p></div></div>
+            <div class="audience-card"><div class="audience-icon">💼</div><div><strong>Support workers and carers</strong><p>FinditPal can be set up and used alongside a client, reducing the need for carers to guess what someone is trying to find and enabling more independent digital access.</p></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div id="how-page" class="page">
+    <div class="info-page-wrap">
+        <div class="info-top-bar">
+            <button class="icon-btn" onclick="showPage('landing-page')">←</button>
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <div style="width:42px;"></div>
+        </div>
+        <div class="info-hero" style="background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));">
+            <div class="info-hero-icon">⚙️</div>
+            <h1 class="info-hero-title">How the Questioning Works</h1>
+            <p class="info-hero-sub">Binary narrowing meets cognitive scaffolding.</p>
+        </div>
+        <div class="info-body">
+            <p class="info-para">FinditPal uses a layered binary narrowing approach, similar to how a doctor narrows a diagnosis through structured questions. Each yes or no answer eliminates roughly half the remaining possibilities, so even 8 to 10 questions can identify something from millions of options.</p>
+            <h2 class="info-subheading">The four layers of questioning</h2>
+            <div class="how-step"><div class="how-num">1</div><div><strong>Broad existence filters</strong><p>Is it a living thing? Is it real or fictional? Is it a person, place, or object? These early questions eliminate huge categories fast.</p></div></div>
+            <div class="how-step"><div class="how-num">2</div><div><strong>Context and setting</strong><p>Is it from a movie? Did it happen in Australia? Is it something you eat? Anchors the search to a domain.</p></div></div>
+            <div class="how-step"><div class="how-num">3</div><div><strong>Sensory and physical details</strong><p>Is it big? Does it have a horn? Is it colourful? Does it make a sound? Draws on memory fragments rather than words.</p></div></div>
+            <div class="how-step"><div class="how-num">4</div><div><strong>Specific narrowing</strong><p>Does it live in Africa? Was it made before 2000? Is it grey? By this point, usually only a handful of possibilities remain.</p></div></div>
+            <div class="info-callout">
+                <span class="callout-icon">🧠</span>
+                <div>This mirrors cognitive scaffolding techniques used in speech pathology and special education. Rather than asking someone to retrieve a word, it gives them a structure to navigate toward it through recognition rather than recall. Recognition is significantly less cognitively demanding than free recall for most people with memory difficulties.</div>
+            </div>
+            <h2 class="info-subheading">The simplicity slider</h2>
+            <p class="info-para">Questions can be adjusted from fully detailed ("Was this animal found primarily in sub-Saharan Africa?") all the way down to a single word ("Africa?"). The simplicity slider in settings lets each user find their own comfortable level.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ACCESSIBILITY -->
+<div id="access-page" class="page">
+    <div class="info-page-wrap">
+        <div class="info-top-bar">
+            <button class="icon-btn" onclick="showPage('landing-page')">←</button>
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <div style="width:42px;"></div>
+        </div>
+        <div class="info-hero" style="background: linear-gradient(135deg, var(--secondary-light), var(--primary-light));">
+            <div class="info-hero-icon">♿</div>
+            <h1 class="info-hero-title">Our Accessibility Commitments</h1>
+            <p class="info-hero-sub">Accessibility is not a feature here. It is the entire product.</p>
+        </div>
+        <div class="info-body">
+            <p class="info-para">Every design decision in FinditPal was made with accessibility in mind first. Below is every commitment we have shipped, with more on the way.</p>
+            <div class="access-item"><div class="access-icon">🔤</div><div><strong>Adjustable text size</strong><p>Scales from 14px to 26px using a slider in settings. Affects all text across the entire app, not just one section.</p></div></div>
+            <div class="access-item"><div class="access-icon">🖱️</div><div><strong>Button size control</strong><p>Buttons can be set to Normal, Large, or Extra Large to support users with reduced fine motor precision or motor impairments.</p></div></div>
+            <div class="access-item"><div class="access-icon">👁️</div><div><strong>Colour blindness correction</strong><p>Four SVG-based correction filters: Protanopia (red-blind), Deuteranopia (green-blind), Tritanopia (blue-yellow), and Achromatopsia (full greyscale). Applied across the entire page instantly.</p></div></div>
+            <div class="access-item"><div class="access-icon">🌙</div><div><strong>Dark mode</strong><p>Carefully chosen palette using Deep Midnight (#1A1D23) and Soft Cloud (#E2E8F0) to maintain WCAG AA contrast ratios throughout.</p></div></div>
+            <div class="access-item"><div class="access-icon">💬</div><div><strong>Simplified language slider</strong><p>Questions can be reduced to single words for users who need minimal text. Designed in consultation with cognitive load research in special education.</p></div></div>
+            <div class="access-item"><div class="access-icon">🐾</div><div><strong>Mascot-based interaction</strong><p>A friendly animated companion reduces anxiety, creates emotional warmth, and frames the experience as a game rather than a test. Six mascots to personalise the experience.</p></div></div>
+            <div class="access-item"><div class="access-icon">🎙️</div><div><strong>Voice input (coming soon)</strong><p>Full voice input and text-to-speech output for users who find typing difficult, painful, or inaccessible. Button is already in the UI, functionality arriving in the next release.</p></div></div>
+            <div class="info-callout">
+                <span class="callout-icon">📋</span>
+                <div>FinditPal is being built to align with WCAG 2.1 AA standards and the Australian Government's Digital Service Standard for accessibility. If you find something that isn't working for you, we want to know.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ROADMAP -->
+<div id="roadmap-page" class="page">
+    <div class="info-page-wrap">
+        <div class="info-top-bar">
+            <button class="icon-btn" onclick="showPage('landing-page')">←</button>
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <div style="width:42px;"></div>
+        </div>
+        <div class="info-hero" style="background: linear-gradient(135deg, var(--primary-light), #EEF2FF);">
+            <div class="info-hero-icon">🚀</div>
+            <h1 class="info-hero-title">Where We're Headed</h1>
+            <p class="info-hero-sub">FinditPal is actively growing. Here's what's coming.</p>
+        </div>
+        <div class="info-body">
+            <p class="info-para">FinditPal started as a university project at the University of Canberra. It has real-world application potential in disability support, aged care, education, and consumer accessibility. Here's the roadmap.</p>
+            <h2 class="info-subheading">Now live</h2>
+            <div class="roadmap-item done"><div class="roadmap-dot done-dot"></div><div><strong>AI-powered yes/no questioning</strong><p>Powered by Claude (Anthropic). Structured binary narrowing across 16+ categories.</p></div></div>
+            <div class="roadmap-item done"><div class="roadmap-dot done-dot"></div><div><strong>Personalised mascot and setup</strong><p>Name, mascot, font size, button size, dark mode, colour blindness filters, and simplicity slider.</p></div></div>
+            <div class="roadmap-item done"><div class="roadmap-dot done-dot"></div><div><strong>Search history carousel</strong><p>Persistent local log of previously found results, swipeable and individually deletable.</p></div></div>
+            <h2 class="info-subheading">Coming next</h2>
+            <div class="roadmap-item upcoming"><div class="roadmap-dot upcoming-dot"></div><div><strong>Voice input and text-to-speech</strong><p>Hands-free operation for users who find typing inaccessible. The button is already in the UI.</p></div></div>
+            <div class="roadmap-item upcoming"><div class="roadmap-dot upcoming-dot"></div><div><strong>Image-based hint mode</strong><p>Users describe a colour, shape, or visual they remember and FinditPal factors that into its questioning.</p></div></div>
+            <div class="roadmap-item upcoming"><div class="roadmap-dot upcoming-dot"></div><div><strong>Parent and carer dashboard</strong><p>Monitor search history, set category defaults, and configure accessibility settings on behalf of a user.</p></div></div>
+            <h2 class="info-subheading">Longer term</h2>
+            <div class="roadmap-item future"><div class="roadmap-dot future-dot"></div><div><strong>NDIS provider integration</strong><p>FinditPal as a tool within registered disability support organisations, embedded in care plans.</p></div></div>
+            <div class="roadmap-item future"><div class="roadmap-dot future-dot"></div><div><strong>Browser extension</strong><p>Bring FinditPal's questioning into any website, not just this one. Right-click and ask FinditPal to help find something.</p></div></div>
+            <div class="roadmap-item future"><div class="roadmap-dot future-dot"></div><div><strong>Offline mode</strong><p>Local model support for low-connectivity environments, shared care tablets, and regional disability services.</p></div></div>
+            <div class="info-callout">
+                <span class="callout-icon">💬</span>
+                <div>Have a suggestion? Genuinely, we want to hear it. Drop us a message through the Contact page and tell us what would make FinditPal more useful for you or someone you support.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CONTACT -->
+<div id="contact-page" class="page">
+    <div class="info-page-wrap">
+        <div class="info-top-bar">
+            <button class="icon-btn" onclick="showPage('landing-page')">←</button>
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <div style="width:42px;"></div>
+        </div>
+        <div class="info-hero" style="background: linear-gradient(135deg, var(--secondary-light), var(--surface2));">
+            <div class="info-hero-icon">📬</div>
+            <h1 class="info-hero-title">Get in Touch</h1>
+            <p class="info-hero-sub">We're a small team and we actually read our messages.</p>
+        </div>
+        <div class="info-body">
+            <p class="info-para">FinditPal is built by a small team of software engineering students at the University of Canberra with a genuine interest in making technology more inclusive. We are always open to feedback, partnership enquiries, or just a conversation about accessible design.</p>
+            <div class="contact-chips" style="margin: 8px 0 24px;">
+                <a class="contact-chip" href="/cdn-cgi/l/email-protection#670f020b0b0827130e1713061749061717">✉️ <span class="__cf_email__" data-cfemail="38505d545457784c51484c594816594848">[email&#160;protected]</span></a>
+                <a class="contact-chip" href="#">🐦 @finditpalapp</a>
+                <a class="contact-chip" href="#">💻 GitHub</a>
+            </div>
+            <h2 class="info-subheading">Who we want to hear from</h2>
+            <div class="audience-card"><div class="audience-icon">♿</div><div><strong>People with disabilities and their families</strong><p>Your lived experience is the most valuable feedback we can get. If something doesn't work for you, that's a bug we need to fix.</p></div></div>
+            <div class="audience-card"><div class="audience-icon">🏥</div><div><strong>NDIS providers and disability support organisations</strong><p>We're open to partnerships, pilots, and integration conversations. FinditPal has real potential as a support tool in formal care settings.</p></div></div>
+            <div class="audience-card"><div class="audience-icon">🎓</div><div><strong>Researchers and educators</strong><p>If you work in accessibility tech, cognitive science, speech pathology, or special education, we'd love to connect.</p></div></div>
+            <div class="audience-card"><div class="audience-icon">💡</div><div><strong>Developers and designers</strong><p>FinditPal is open source and we welcome contributions, especially from people with accessibility expertise.</p></div></div>
+            <div class="info-callout">
+                <span class="callout-icon">📍</span>
+                <div>We are based in Canberra, Australia. We are students but we are serious about this. If you share our mission of making the internet genuinely accessible, reach out.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CATEGORY PAGE ==================== -->
+<div id="category-page" class="page">
+    <div style="width:100%; max-width:640px; margin:0 auto;">
+        <div class="top-bar">
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <div style="display:flex; gap:8px;">
+                <button class="icon-btn" onclick="showPage('landing-page')" title="Back">←</button>
+                <button class="icon-btn" onclick="showPage('setup-page')" title="Settings">⚙️</button>
+            </div>
+        </div>
+        <div class="container" style="padding-top:0;">
+            <h2 style="font-family:'Baloo 2',cursive; margin-bottom:16px; font-size:1.4rem;">What kind of thing is it? 🤔</h2>
+            <div class="category-grid" id="full-categories"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MEMORY PAGE ==================== -->
+<div id="memory-page" class="page">
+    <div style="width:100%; max-width:640px; margin:0 auto;">
+        <div class="top-bar">
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <button class="icon-btn" onclick="showPage('category-page')" title="Back">←</button>
+        </div>
+        <div class="container" style="padding-top:0;">
+            <div class="mascot-wrap">
+                <div class="mascot-circle mascot-panda" id="memory-mascot">🐼</div>
+                <div class="speech-bubble" id="memory-bubble">
+                    Do you remember anything about it?
+                </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+                <button class="btn btn-primary" style="width:100%;" onclick="memoryAnswer('yes')">✅ Yes, I remember something</button>
+                <button class="btn btn-secondary" style="width:100%;" onclick="memoryAnswer('no')">🤷 No, not really</button>
+                <button class="btn btn-ghost" style="width:100%;" onclick="memoryAnswer('unsure')">🌫️ I'm not really sure</button>
+            </div>
+
+            <div id="memory-input-wrap" style="display:none; margin-top:24px;">
+                <div class="setup-label" style="margin-bottom:10px;">Tell me what you remember:</div>
+                <textarea class="setup-input" id="memory-text" rows="3" placeholder="e.g. it was a movie, it had the word Love in it, it was a love story..."></textarea>
+                <button class="btn btn-primary" style="width:100%; margin-top:12px;" onclick="startQuestioning()">
+                    Start guessing! 🎯
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== QUESTION PAGE ==================== -->
+<div id="question-page" class="page">
+    <div class="question-page-inner">
+        <div class="top-bar" style="padding:16px 0; width:100%;">
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <div style="display:flex; gap:8px;">
+                <button class="icon-btn" onclick="startOver()" title="Start over">↺</button>
+                <button class="icon-btn" onclick="showPage('setup-page')" title="Settings">⚙️</button>
+            </div>
+        </div>
+
+        <div class="question-badge" id="question-badge">Question 1</div>
+        <div class="question-progress" id="question-progress"></div>
+
+        <div class="mascot-wrap" style="margin:0; width:100%;">
+            <div class="mascot-circle mascot-panda" id="question-mascot">🐼</div>
+            <div class="speech-bubble" id="question-bubble" style="width:100%;">
+                <div class="thinking-wrap" id="question-thinking">
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+                <span id="question-text" style="display:none;"></span>
+            </div>
+        </div>
+
+        <div id="dynamic-answers" style="display:none; width:100%; flex-direction:column; gap:12px;"></div>
+
+        <!-- Memory jolt input -->
+        <div class="hint-addon" id="hint-addon" style="display:none;">
+            <div class="hint-addon-label">That question jog your memory?</div>
+            <div class="hint-addon-row">
+                <input class="hint-input" id="hint-input" type="text" placeholder="Add more detail here..." maxlength="120" onkeydown="if(event.key==='Enter') submitHint()">
+                <button class="hint-submit-btn" onclick="submitHint()">Add</button>
+            </div>
+        </div>
+
+        <div id="question-error" class="error-msg" style="width:100%;"></div>
+
+        <button class="btn btn-ghost" style="font-size:0.85rem; padding:10px 22px;" onclick="startOver()">
+            ↺ Start over
+        </button>
+    </div>
+</div>
+
+<!-- ==================== RESULTS PAGE ==================== -->
+<div id="results-page" class="page">
+    <div style="width:100%; max-width:640px; margin:0 auto;">
+        <div class="top-bar">
+            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <button class="icon-btn" onclick="startOver()" title="Start over">↺</button>
+        </div>
+        <div class="container" style="padding-top:0;">
+            <div class="mascot-wrap">
+                <div class="mascot-circle mascot-panda" id="results-mascot">🐼</div>
+                <div class="speech-bubble" id="results-bubble">Is this what you were thinking of?</div>
+            </div>
+
+            <div id="results-list"></div>
+
+            <div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">
+                <button class="btn btn-ghost" style="width:100%;" onclick="noneOfThese()">None of these, keep going</button>
+                <button class="btn btn-ghost" style="width:100%;" onclick="startOver()">Try something else</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+    name: '',
+    mascot: 'panda',
+    mascotEmoji: 'panda.png',
+    mascotName: 'Panda',
+    fontSize: 18,
+    btnSize: 'normal',
+    theme: 'light',
+    simplicity: 3,
+    apiKey: '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',
+    selectedCategory: '',
+    initialMemory: '',
+    messages: [],
+    questionCount: 0
+};
+
+const MASCOTS = {
+    panda:   {
+        emoji: '🐼', img: 'panda.png', name: 'Dumpling', species: 'Panda',
+        cls: 'mascot-panda',
+        greeting: (n) => `Hi ${n}! I'm Dumpling the Panda and I'm so happy to meet you! I'll be right here cheering you on every single step. Let's find what you're looking for together!`,
+        personality: `Your tone is warm, gentle and reassuring. You cheer the user on with small encouragements like "You're doing brilliantly!" or "That really helps!" Never rush. Make them feel completely safe.`
+    },
+    dragon:  {
+        emoji: '🐉', img: 'dragon.png', name: 'Noodle', species: 'Dragon',
+        cls: 'mascot-dragon',
+        greeting: (n) => `HEYYY ${n}!! Noodle the Dragon is HERE and I am SO ready for this!! Finding things is literally my favourite thing EVER!! Let's GO!!`,
+        personality: `Your tone is playful, energetic and enthusiastic! Use exclamation marks often. React with big excitement when you get answers. Keep the energy fun and high without being overwhelming.`
+    },
+    dog:     {
+        emoji: '🐶', img: 'dog.png', name: 'Dino', species: 'Dog',
+        cls: 'mascot-dog',
+        greeting: (n) => `Hey hey hey ${n}! Dino the Dog here! I'm loyal, I'm focused, and I won't stop until we track down exactly what you need. You can always count on me!`,
+        personality: `Your tone is loyal, dependable and encouraging like a good friend. Keep things simple and clear. Use phrases like "We've got this" and "I'm right with you." Steady and warm.`
+    },
+    cat:     {
+        emoji: '🐱', img: 'cat.png', name: 'Cleo', species: 'Cat',
+        cls: 'mascot-cat',
+        greeting: (n) => `Hello ${n}. I'm Cleo the Cat. I'm precise, I'm patient, and I have a very good feeling we'll figure this out together quite elegantly. Shall we begin?`,
+        personality: `Your tone is calm, thoughtful and quietly confident. Choose words carefully. Be precise but warm. React with composed satisfaction like "Interesting, that narrows things considerably."`
+    },
+    penguin: {
+        emoji: '🐧', img: 'penguin.png', name: 'Percy', species: 'Penguin',
+        cls: 'mascot-penguin',
+        greeting: (n) => `WAHOO ${n}!! I'm Percy the Penguin and I am absolutely DELIGHTED to meet you! I may waddle but I am speedy at finding things, let me tell you!`,
+        personality: `Your tone is cheerful, upbeat and lightly humorous. Add occasional fun observations. Keep the mood light and positive. React with genuine delight to every answer.`
+    },
+    zebra:   {
+        emoji: '🦓', img: 'zebra.png', name: 'Ziggy', species: 'Zebra',
+        cls: 'mascot-zebra',
+        greeting: (n) => `YO ${n}! Ziggy the Zebra, ready to charge! We're going on a proper adventure together right now and trust me, we WILL find what you're looking for! Let's ride!`,
+        personality: `Your tone is bold, adventurous and motivating. Use confident phrases like "We're closing in!" or "On the right track!" Frame each question like an exciting mission step.`
+    },
+    monkey:  {
+        emoji: '🐵', img: 'monkey.png', name: 'Mochi', species: 'Monkey',
+        cls: 'mascot-monkey',
+        greeting: (n) => `Ooh ooh ${n}!! I'm Mochi the Monkey and I LOVE a good mystery!! Every little clue you give me is like finding treasure!! I'm already so curious about this one!!`,
+        personality: `Your tone is curious, excited and detail-loving. React with genuine fascination to every answer. Use phrases like "Ooh that's a great clue!" and "I'm piecing it together!"`
+    }
+};
+
+const CATEGORIES = [
+    { emoji: '🎬', name: 'Movies' },
+    { emoji: '📺', name: 'TV Shows' },
+    { emoji: '🎵', name: 'Music' },
+    { emoji: '🎮', name: 'Video Games' },
+    { emoji: '⚽', name: 'Sports' },
+    { emoji: '⭐', name: 'Celebrities' },
+    { emoji: '🧙', name: 'Fictional Characters' },
+    { emoji: '🌍', name: 'Countries' },
+    { emoji: '🏙️', name: 'Cities' },
+    { emoji: '🍕', name: 'Food' },
+    { emoji: '🎨', name: 'Colours' },
+    { emoji: '🐾', name: 'Animals' },
+    { emoji: '📚', name: 'Books' },
+    { emoji: '📱', name: 'Apps & Websites' },
+    { emoji: '🏷️', name: 'Brands' },
+    { emoji: '🤔', name: 'Something Else' }
+];
+
+const SIMPLICITY_PREVIEWS = {
+    1: 'e.g. "Was this film released before the year 2010?"',
+    2: 'e.g. "Was it released quite a while ago?"',
+    3: 'e.g. "Is it an older movie?"',
+    4: 'e.g. "Old movie?"',
+    5: 'e.g. "Old?"'
+};
+
+// ============================================================
+// SETUP
+// ============================================================
+function selectToggle(el, group) {
+    document.querySelectorAll(`[data-${group}]`).forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+}
+
+function selectTheme(el) {
+    document.querySelectorAll('[data-theme-val]').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    document.documentElement.setAttribute('data-theme', el.dataset.themeVal);
+}
+
+const CB_NOTES = {
+    none:          '',
+    protanopia:    'Correcting for Protanopia (difficulty distinguishing red from green, red appears darker)',
+    deuteranopia:  'Correcting for Deuteranopia (most common red-green type, green appears muted)',
+    tritanopia:    'Correcting for Tritanopia (blue and yellow are hard to distinguish)',
+    achromatopsia: 'Full greyscale mode (no colour perception)'
+};
+
+function selectColourBlind(el) {
+    document.querySelectorAll('.cb-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    const mode = el.dataset.cb;
+    applyColourBlindFilter(mode);
+    document.getElementById('cb-preview-note').textContent = CB_NOTES[mode];
+}
+
+function applyColourBlindFilter(mode) {
+    const filterMap = {
+        none:          '',
+        protanopia:    'url(#cb-protanopia)',
+        deuteranopia:  'url(#cb-deuteranopia)',
+        tritanopia:    'url(#cb-tritanopia)',
+        achromatopsia: 'url(#cb-achromatopsia)'
+    };
+    document.body.style.filter = filterMap[mode] || '';
+}
+
+function selectMascot(el) {
+    document.querySelectorAll('.mascot-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+}
+
+document.getElementById('setup-fontsize').addEventListener('input', function() {
+    document.getElementById('font-preview').style.fontSize = this.value + 'px';
+});
+
+document.getElementById('setup-simplicity').addEventListener('input', function() {
+    document.getElementById('simplicity-preview').textContent = SIMPLICITY_PREVIEWS[this.value];
+});
+document.getElementById('simplicity-preview').textContent = SIMPLICITY_PREVIEWS[3];
+
+// ============================================================
+// WIZARD
+// ============================================================
+function wizardNext(step) {
+    if (step === 1) {
+        const name = document.getElementById('setup-name').value.trim();
+        if (!name) {
+            document.getElementById('wizard-1-error').style.display = 'block';
+            return;
+        }
+        document.getElementById('wizard-1-error').style.display = 'none';
+    }
+    if (step === 2) {
+        if (!document.querySelector('.companion-card.selected')) {
+            document.getElementById('wizard-2-error').style.display = 'block';
+            return;
+        }
+        document.getElementById('wizard-2-error').style.display = 'none';
+    }
+    goToWizardStep(step + 1);
+}
+
+function wizardBack(step) {
+    goToWizardStep(step - 1);
+}
+
+function goToWizardStep(n) {
+    document.querySelectorAll('.wizard-panel').forEach((p, i) => {
+        p.classList.toggle('active', i === n - 1);
+    });
+    [1, 2, 3].forEach(i => {
+        const dot = document.getElementById('wstep-' + i);
+        const line = document.getElementById('wline-' + i);
+        if (i < n) { dot.classList.add('done'); dot.classList.remove('active'); dot.textContent = '✓'; }
+        else if (i === n) { dot.classList.add('active'); dot.classList.remove('done'); dot.textContent = i; }
+        else { dot.classList.remove('active', 'done'); dot.textContent = i; }
+        if (line) line.classList.toggle('active', i < n);
+    });
+    window.scrollTo(0, 0);
+}
+
+function selectCompanion(el) {
+    const name = document.getElementById('setup-name').value.trim() || 'there';
+    const mascotKey = el.dataset.mascot;
+    const mascot = MASCOTS[mascotKey];
+
+    // Pop animation
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+
+    // Mark selected
+    document.querySelectorAll('.companion-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+
+    // Show preview
+    const preview = document.getElementById('companion-preview');
+    const previewMascot = document.getElementById('comp-preview-mascot');
+    const previewBubble = document.getElementById('comp-preview-bubble');
+
+    previewMascot.innerHTML = `<img src="${mascot.img}" alt="${mascot.name}">`;
+    previewBubble.textContent = mascot.greeting(name);
+    preview.style.display = 'flex';
+
+    // Scroll preview into view
+    preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function saveSetup() {
+    const name = document.getElementById('setup-name').value.trim();
+    if (!name) { goToWizardStep(1); return; }
+
+    const selectedCompanion = document.querySelector('.companion-card.selected');
+    if (!selectedCompanion) { goToWizardStep(2); return; }
+
+    const mascotKey = selectedCompanion.dataset.mascot;
+    const fontSize = document.getElementById('setup-fontsize').value;
+    const btnSize = document.querySelector('[data-btnsize].active')?.dataset.btnsize || 'normal';
+    const theme = document.querySelector('[data-theme-val].active')?.dataset.themeVal || 'light';
+    const simplicity = parseInt(document.getElementById('setup-simplicity').value);
+    const colourBlind = document.querySelector('.cb-btn.active')?.dataset.cb || 'none';
+
+    Object.assign(state, {
+        name,
+        mascot: mascotKey,
+        mascotEmoji: MASCOTS[mascotKey].img,
+        mascotName: MASCOTS[mascotKey].name,
+        fontSize, btnSize, theme, simplicity, colourBlind
+    });
+
+    applySettings();
+
+    localStorage.setItem('finditpal_settings', JSON.stringify({
+        name, mascot: mascotKey, fontSize, btnSize, theme, simplicity, colourBlind
+    }));
+
+    populateCategories();
+    showLanding();
+}
+
+function loadSettings() {
+    const raw = localStorage.getItem('finditpal_settings');
+    if (!raw) return false;
+
+    const s = JSON.parse(raw);
+    Object.assign(state, {
+        name: s.name,
+        apiKey: s.apiKey || state.apiKey,
+        mascot: s.mascot,
+        mascotEmoji: MASCOTS[s.mascot].emoji,
+        mascotName: MASCOTS[s.mascot].name,
+        fontSize: s.fontSize,
+        btnSize: s.btnSize,
+        theme: s.theme,
+        simplicity: parseInt(s.simplicity),
+        colourBlind: s.colourBlind || 'none'
+    });
+
+    // Pre-fill form
+    document.getElementById('setup-name').value = s.name || '';
+    document.getElementById('setup-fontsize').value = s.fontSize;
+    document.getElementById('font-preview').style.fontSize = s.fontSize + 'px';
+    document.getElementById('setup-simplicity').value = s.simplicity;
+    document.getElementById('simplicity-preview').textContent = SIMPLICITY_PREVIEWS[s.simplicity];
+
+    document.querySelectorAll('.companion-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.mascot === s.mascot);
+    });
+    document.querySelectorAll('[data-btnsize]').forEach(b => {
+        b.classList.toggle('active', b.dataset.btnsize === s.btnSize);
+    });
+    document.querySelectorAll('[data-theme-val]').forEach(b => {
+        b.classList.toggle('active', b.dataset.themeVal === s.theme);
+    });
+    document.querySelectorAll('.cb-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.cb === (s.colourBlind || 'none'));
+    });
+    document.getElementById('cb-preview-note').textContent = CB_NOTES[s.colourBlind || 'none'] || '';
+
+    applySettings();
+    populateCategories();
+    return true;
+}
+
+function applySettings() {
+    document.documentElement.style.setProperty('--font-size', state.fontSize + 'px');
+    document.body.setAttribute('data-btnsize', state.btnSize);
+    document.documentElement.setAttribute('data-theme', state.theme);
+    applyColourBlindFilter(state.colourBlind || 'none');
+}
+
+// ============================================================
+// PAGE NAV
+// ============================================================
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+// ============================================================
+// MASCOT HELPERS
+// ============================================================
+function updateAllMascots() {
+    const m = MASCOTS[state.mascot];
+    if (!m) return;
+    const imgTag = `<img src="${m.img}" alt="${m.name}">`;
+    document.querySelectorAll('.mascot-circle').forEach(el => {
+        el.innerHTML = imgTag;
+        el.className = 'mascot-circle ' + m.cls;
+    });
+}
+
+// ============================================================
+// LANDING
+// ============================================================
+function showLanding() {
+    updateAllMascots();
+    document.getElementById('day-buttons').style.display = 'flex';
+    document.getElementById('help-input-section').style.display = 'none';
+    document.getElementById('landing-bubble').textContent = `Hi ${state.name}! I'm ${state.mascotName}. How has your day been? 😊`;
+    showPage('landing-page');
+}
+
+function respondDay(mood) {
+    document.getElementById('day-buttons').style.display = 'none';
+    const msgs = {
+        great: `That's wonderful! 🌟 So glad to hear it, ${state.name}! How can I help you today?`,
+        okay:  `That's alright! Every day is a new adventure 😄 How can I help you today, ${state.name}?`,
+        bad:   `I'm sorry to hear that 💙 Let's see if we can help you out. How can I help you today, ${state.name}?`
+    };
+    document.getElementById('landing-bubble').textContent = msgs[mood];
+    document.getElementById('help-input-section').style.display = 'block';
+    renderCarousel();
+}
+
+function startFromText() {
+    const text = document.getElementById('landing-text-input').value.trim();
+    state.initialMemory = text;
+    state.selectedCategory = 'General';
+    if (text) {
+        startQuestioning();
+    } else {
+        showCategoryPage();
+    }
+}
+
+// ============================================================
+// CATEGORIES
+// ============================================================
+function populateCategories() {
+    const html = CATEGORIES.map(c =>
+        `<button class="category-btn" onclick="selectCategory('${c.name.replace(/'/g, "\\'")}')">
+            <span class="cat-emoji">${c.emoji}</span>
+            <span class="cat-name">${c.name}</span>
+        </button>`
+    ).join('');
+    const lc = document.getElementById('landing-categories');
+    const fc = document.getElementById('full-categories');
+    if (lc) lc.innerHTML = html;
+    if (fc) fc.innerHTML = html;
+}
+
+function showCategoryPage() {
+    showPage('category-page');
+}
+
+function selectCategory(cat) {
+    state.selectedCategory = cat;
+    state.initialMemory = document.getElementById('landing-text-input').value.trim();
+    const catData = CATEGORIES.find(c => c.name === cat);
+    const emoji = catData ? catData.emoji : '🤔';
+    updateAllMascots();
+    document.getElementById('memory-bubble').textContent =
+        `Got it! ${emoji} Do you remember anything about this ${cat.toLowerCase()}?`;
+    document.getElementById('memory-input-wrap').style.display = 'none';
+    document.getElementById('memory-text').value = '';
+    showPage('memory-page');
+}
+
+// ============================================================
+// MEMORY PAGE
+// ============================================================
+function memoryAnswer(answer) {
+    if (answer === 'yes') {
+        document.getElementById('memory-input-wrap').style.display = 'block';
+        document.getElementById('memory-bubble').textContent =
+            `Great! Even a tiny detail helps. Tell me what you remember 📝`;
+    } else {
+        state.initialMemory = '';
+        startQuestioning();
+    }
+}
+
+// ============================================================
+// QUESTIONING
+// ============================================================
+let questionNum = 0;
+
+function startQuestioning() {
+    const memText = document.getElementById('memory-text')?.value.trim() || '';
+    if (memText) state.initialMemory = memText;
+
+    state.messages = [];
+    questionNum = 0;
+
+    const progress = document.getElementById('question-progress');
+    progress.innerHTML = Array(10).fill('<div class="progress-dot"></div>').join('');
+
+    updateAllMascots();
+    showPage('question-page');
+    askNextQuestion();
+}
+
+async function askNextQuestion() {
+    // Show loading state
+    document.getElementById('question-thinking').style.display = 'flex';
+    document.getElementById('question-text').style.display = 'none';
+    document.getElementById('dynamic-answers').style.display = 'none';
+    document.getElementById('hint-addon').style.display = 'none';
+    document.getElementById('question-error').style.display = 'none';
+
+    // Build initial user message if first question
+    if (state.messages.length === 0) {
+        let msg = `I'm thinking of something in the category: ${state.selectedCategory}.`;
+        if (state.initialMemory) {
+            msg += ` Here's what I remember: "${state.initialMemory}".`;
+        } else {
+            msg += ` I don't remember many specific details yet.`;
+        }
+        msg += ` Please start asking me yes/no questions to help narrow it down.`;
+        state.messages.push({ role: 'user', content: msg });
+    }
+
+    try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': state.apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 400,
+                system: buildSystemPrompt(),
+                messages: state.messages
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+            showError(data.error.message || 'API error. Check your key and try again.');
+            return;
+        }
+
+        const reply = data.content[0].text.trim();
+        state.messages.push({ role: 'assistant', content: reply });
+
+        // Check for guess
+        if (reply.includes('GUESS:')) {
+            handleGuess(reply);
+            return;
+        }
+
+        // Parse question text and options
+        const parsed = parseQuestion(reply);
+
+        // Show question
+        questionNum++;
+        document.getElementById('question-badge').textContent = `Question ${questionNum}`;
+        const dots = document.querySelectorAll('.progress-dot');
+        if (dots[questionNum - 1]) dots[questionNum - 1].classList.add('filled');
+
+        document.getElementById('question-thinking').style.display = 'none';
+        document.getElementById('question-text').style.display = 'block';
+        document.getElementById('question-text').textContent = parsed.question;
+
+        renderAnswerButtons(parsed.options);
+        document.getElementById('dynamic-answers').style.display = 'flex';
+
+    } catch(err) {
+        showError('Something went wrong. Please check your API key in settings and try again.');
+    }
+}
+
+function answerQuestion(answer) {
+    // Grab any extra hint the user typed
+    const hintInput = document.getElementById('hint-input');
+    const hint = hintInput ? hintInput.value.trim() : '';
+    const fullAnswer = hint ? `${answer}. Extra detail: ${hint}` : answer;
+
+    // Clear hint box
+    if (hintInput) hintInput.value = '';
+
+    state.messages.push({ role: 'user', content: fullAnswer });
+    askNextQuestion();
+}
+
+// Detects if the AI snuck in an "or" question and extracts the options
+function parseQuestion(reply) {
+    const lines = reply.split('\n').map(l => l.trim()).filter(Boolean);
+    const questionLine = lines.find(l => l.endsWith('?')) || reply;
+
+    // Detect "A or B" pattern in the question
+    const orMatch = questionLine.match(/\b(\w[\w\s,]+?)\s+or\s+([\w\s,]+?)\??$/i);
+    if (orMatch) {
+        const opt1 = orMatch[1].trim().replace(/^(is it |was it |does it |did it |are they )/i, '');
+        const opt2 = orMatch[2].trim().replace(/\?$/, '');
+        return {
+            question: questionLine,
+            options: [
+                { label: capitalise(opt1), value: opt1, style: 'choice-a' },
+                { label: capitalise(opt2), value: opt2, style: 'choice-b' },
+                { label: 'Not sure', value: 'Not sure', style: 'maybe' },
+                { label: 'Neither', value: 'Neither of those', style: 'neither' }
+            ]
+        };
+    }
+
+    // Check for OPTIONS: line from structured format
+    const optLine = lines.find(l => l.startsWith('OPTIONS:'));
+    if (optLine) {
+        const rawOpts = optLine.replace('OPTIONS:', '').trim().split('|').map(s => s.trim()).filter(Boolean);
+        const opts = rawOpts.map(o => ({ label: capitalise(o), value: o }));
+        opts.push({ label: 'Not sure', value: 'Not sure', style: 'maybe' });
+        opts.push({ label: 'Neither', value: 'Neither of those', style: 'neither' });
+        const cleanQuestion = lines.filter(l => !l.startsWith('OPTIONS:')).join(' ');
+        return { question: cleanQuestion, options: opts };
+    }
+
+    // Standard yes/no
+    return {
+        question: questionLine,
+        options: [
+            { label: 'Yes', value: 'Yes', style: 'yes' },
+            { label: 'No', value: 'No', style: 'no' },
+            { label: 'Not sure', value: 'Not sure', style: 'maybe' }
+        ]
+    };
+}
+
+function capitalise(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function renderAnswerButtons(options) {
+    const container = document.getElementById('dynamic-answers');
+    container.innerHTML = '';
+
+    const primaryOpts = options.filter(o => o.style !== 'maybe' && o.style !== 'neither');
+    const maybeOpt    = options.find(o => o.style === 'maybe');
+    const neitherOpt  = options.find(o => o.style === 'neither');
+
+    if (primaryOpts.length > 0) {
+        const row = document.createElement('div');
+        row.className = 'answer-row';
+        primaryOpts.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.textContent = opt.label;
+            btn.className = (opt.style === 'yes' || i % 2 === 0) ? 'btn btn-yes' : 'btn btn-no';
+            btn.onclick = () => answerQuestion(opt.value);
+            row.appendChild(btn);
+        });
+        container.appendChild(row);
+    }
+
+    // Not sure + Neither in a row if both exist
+    if (maybeOpt || neitherOpt) {
+        const subRow = document.createElement('div');
+        subRow.className = 'answer-sub-row';
+        if (maybeOpt) {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-maybe';
+            btn.textContent = maybeOpt.label;
+            btn.onclick = () => answerQuestion(maybeOpt.value);
+            subRow.appendChild(btn);
+        }
+        if (neitherOpt) {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-neither';
+            btn.textContent = neitherOpt.label;
+            btn.onclick = () => answerQuestion(neitherOpt.value);
+            subRow.appendChild(btn);
+        }
+        container.appendChild(subRow);
+    }
+
+    // Show hint addon
+    document.getElementById('hint-addon').style.display = 'block';
+}
+
+function handleGuess(reply) {
+    const lines = reply.split('\n');
+    const guessLine = lines.find(l => l.includes('GUESS:')) || '';
+    const rawItems = guessLine.replace('GUESS:', '').trim();
+    const items = rawItems.split(',').map(s => s.trim()).filter(Boolean);
+
+    if (items.length === 0) {
+        state.messages.push({ role: 'user', content: 'Please keep asking more questions.' });
+        askNextQuestion();
+        return;
+    }
+
+    const mascotMsg = lines.filter(l => !l.includes('GUESS:')).join(' ').trim();
+
+    updateAllMascots();
+    document.getElementById('results-bubble').textContent =
+        mascotMsg || `I think I figured it out! Is it one of these?`;
+
+    const resultsList = document.getElementById('results-list');
+    resultsList.innerHTML = items.slice(0, 3).map((item, i) => {
+        const googleUrl  = `https://www.google.com/search?q=${encodeURIComponent(item)}`;
+        const wikiUrl    = `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(item)}`;
+        const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(item)}`;
+        const safeItem   = item.replace(/'/g, "\\'");
+        return `
+        <div class="result-card">
+            <div class="result-card-top">
+                <div class="result-num">${i + 1}</div>
+                <div class="result-name" onclick="searchResult('${safeItem}', '${googleUrl}')">${item}</div>
+                <button class="result-save-btn" id="save-btn-${i}" onclick="saveResult('${safeItem}', ${i})" title="Save this result">Save</button>
+            </div>
+            <div class="result-links">
+                <a class="result-link" href="${googleUrl}" target="_blank" rel="noopener" onclick="saveToHistory('${safeItem}', state.selectedCategory)">Search</a>
+                <a class="result-link" href="${wikiUrl}" target="_blank" rel="noopener">Wikipedia</a>
+                <a class="result-link" href="${youtubeUrl}" target="_blank" rel="noopener">YouTube</a>
+            </div>
+        </div>`;
+    }).join('');
+
+    showPage('results-page');
+    launchConfetti();
+}
+
+function searchResult(item, url) {
+    saveToHistory(item, state.selectedCategory);
+    window.open(url || `https://www.google.com/search?q=${encodeURIComponent(item)}`, '_blank');
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+const CATEGORY_EMOJIS = {
+    'Movies': '🎬', 'TV Shows': '📺', 'Music': '🎵', 'Video Games': '🎮',
+    'Sports': '⚽', 'Celebrities': '⭐', 'Fictional Characters': '🧙',
+    'Countries': '🌍', 'Cities': '🏙️', 'Food': '🍕', 'Colours': '🎨',
+    'Animals': '🐾', 'Books': '📚', 'Apps & Websites': '📱',
+    'Brands': '🏷️', 'Something Else': '🤔', 'General': '🔍'
+};
+
+function saveToHistory(item, category) {
+    const history = getHistory();
+    // Remove duplicate if already exists
+    const deduped = history.filter(h => h.item.toLowerCase() !== item.toLowerCase());
+    const entry = {
+        item,
+        category: category || 'General',
+        date: new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }),
+        ts: Date.now()
+    };
+    deduped.unshift(entry);
+    // Keep max 30
+    localStorage.setItem('finditpal_history', JSON.stringify(deduped.slice(0, 30)));
+}
+
+function getHistory() {
+    try {
+        return JSON.parse(localStorage.getItem('finditpal_history') || '[]');
+    } catch { return []; }
+}
+
+function clearHistory() {
+    if (!confirm('Clear all your search history?')) return;
+    localStorage.removeItem('finditpal_history');
+    renderCarousel();
+}
+
+function deleteHistoryItem(ts, e) {
+    e.stopPropagation();
+    const history = getHistory().filter(h => h.ts !== ts);
+    localStorage.setItem('finditpal_history', JSON.stringify(history));
+    renderCarousel();
+}
+
+function renderCarousel() {
+    const history = getHistory();
+    const section = document.getElementById('history-section');
+    const track = document.getElementById('carousel-track');
+
+    if (history.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    track.innerHTML = history.map(h => {
+        const emoji = CATEGORY_EMOJIS[h.category] || '🔍';
+        return `<div class="history-card" onclick="reuseHistory('${h.item.replace(/'/g, "\\'")}', '${h.category.replace(/'/g, "\\'")}')">
+            <button class="history-card-delete" onclick="deleteHistoryItem(${h.ts}, event)" title="Remove">✕</button>
+            <span class="history-card-emoji">${emoji}</span>
+            <span class="history-card-name">${h.item}</span>
+            <span class="history-card-meta">${h.category} · ${h.date}</span>
+        </div>`;
+    }).join('');
+
+    initCarouselDrag();
+}
+
+function reuseHistory(item, category) {
+    window.open(`https://www.google.com/search?q=${encodeURIComponent(item)}`, '_blank');
+}
+
+function initCarouselDrag() {
+    const wrap = document.querySelector('.carousel-track-wrap');
+    if (!wrap || wrap._dragInit) return;
+    wrap._dragInit = true;
+
+    let isDown = false;
+    let startX, scrollLeft;
+
+    wrap.addEventListener('mousedown', e => {
+        isDown = true;
+        wrap.classList.add('dragging');
+        startX = e.pageX - wrap.offsetLeft;
+        scrollLeft = wrap.scrollLeft;
+    });
+    wrap.addEventListener('mouseleave', () => { isDown = false; wrap.classList.remove('dragging'); });
+    wrap.addEventListener('mouseup', () => { isDown = false; wrap.classList.remove('dragging'); });
+    wrap.addEventListener('mousemove', e => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - wrap.offsetLeft;
+        wrap.scrollLeft = scrollLeft - (x - startX);
+    });
+
+    // Touch support
+    let touchStartX, touchScrollLeft;
+    wrap.addEventListener('touchstart', e => {
+        touchStartX = e.touches[0].pageX;
+        touchScrollLeft = wrap.scrollLeft;
+    }, { passive: true });
+    wrap.addEventListener('touchmove', e => {
+        const x = e.touches[0].pageX;
+        wrap.scrollLeft = touchScrollLeft - (x - touchStartX);
+    }, { passive: true });
+}
+
+function noneOfThese() {
+    state.messages.push({ role: 'user', content: 'None of those were right. Please keep asking more questions to narrow it down further.' });
+    showPage('question-page');
+    document.getElementById('question-thinking').style.display = 'flex';
+    document.getElementById('question-text').style.display = 'none';
+    document.getElementById('dynamic-answers').style.display = 'none';
+    askNextQuestion();
+}
+
+function showError(msg) {
+    document.getElementById('question-thinking').style.display = 'none';
+    const errEl = document.getElementById('question-error');
+    errEl.textContent = '⚠️ ' + msg;
+    errEl.style.display = 'block';
+}
+
+function startOver() {
+    state.messages = [];
+    state.initialMemory = '';
+    state.selectedCategory = '';
+    state.questionCount = 0;
+    const landingInput = document.getElementById('landing-text-input');
+    const memText = document.getElementById('memory-text');
+    if (landingInput) landingInput.value = '';
+    if (memText) memText.value = '';
+    showLanding();
+}
+
+function showInfoPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+}
+
+// ============================================================
+// SYSTEM PROMPT
+// ============================================================
+function buildSystemPrompt() {
+    const styleGuide = {
+        1: 'Use full sentences with context. Example: "Was this animal last seen in the wild primarily in Africa?"',
+        2: 'Use clear but concise questions. Example: "Does it mainly live in Africa?"',
+        3: 'Use simple, friendly questions. Example: "Is it from Africa?"',
+        4: 'Use very short questions. Example: "Africa?"',
+        5: 'Use 1 to 3 words only. Example: "Africa?" or "Big animal?"'
+    };
+
+    const personality = MASCOTS[state.mascot]?.personality || '';
+
+    return `You are ${state.mascotName} the ${MASCOTS[state.mascot]?.species || 'companion'}, a memory assistant helping ${state.name} identify something they cannot fully remember.
+
+PERSONALITY: ${personality}
+Important: Express your personality naturally but never let it slow down the questioning. One brief encouraging phrase per response at most.
+
+CRITICAL RULE - QUESTION FORMAT:
+- Ask ONLY pure yes/no questions. The user can only answer Yes, No, or Not sure.
+- NEVER ask "or" questions like "Is it X or Y?" - this breaks the interface.
+- One question per response only.
+- Bad example: "Is it a land animal or a water animal?" (FORBIDDEN)
+- Good example: "Does it live on land?" (then follow up with water if no)
+
+QUESTION STYLE: ${styleGuide[state.simplicity]}
+
+SMART NARROWING STRATEGY:
+Use a binary decision tree. Start broad, eliminate large groups first:
+1. Living vs non-living, real vs fictional
+2. Size, region/continent, domesticated vs wild
+3. Specific physical traits (horn, stripes, wings, etc.)
+4. Behaviour, diet, habitat specifics
+
+GUESSING:
+After at least 6 questions, if confident, respond in EXACTLY this format:
+[One short encouraging sentence on its own line]
+GUESS: [first guess], [second guess], [third guess]
+
+At 15 questions with no confident guess, make your best guess anyway.
+If user says "not sure", accept it and move to a different angle.`;
+}
+
+// ============================================================
+// CONFETTI
+// ============================================================
+function launchConfetti() {
+    const colors = ['#94A3E8', '#818CF8', '#A8E6CF', '#6EE7B7', '#FFD3B6', '#F87171', '#A5B4FC'];
+    for (let i = 0; i < 70; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        const size = 6 + Math.random() * 10;
+        el.style.cssText = `
+            left: ${Math.random() * 100}vw;
+            background: ${colors[Math.floor(Math.random() * colors.length)]};
+            width: ${size}px;
+            height: ${size}px;
+            border-radius: ${Math.random() > 0.5 ? '50%' : '3px'};
+            animation-duration: ${1.5 + Math.random() * 2.5}s;
+            animation-delay: ${Math.random() * 0.6}s;
+        `;
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+    }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', () => {
+    const loaded = loadSettings();
+    if (loaded) {
+        showLanding();
+    }
+});
+
+// ============================================================
+// EXPOSE FUNCTIONS TO GLOBAL SCOPE (required for onclick attrs)
+// ============================================================
+function saveResult(item, btnIndex) {
+    saveToHistory(item, state.selectedCategory);
+    const btn = document.getElementById('save-btn-' + btnIndex);
+    if (btn) {
+        btn.textContent = 'Saved';
+        btn.classList.add('result-save-btn--saved');
+        btn.disabled = true;
+    }
+}
+
+function submitHint() {
+    const hintInput = document.getElementById('hint-input');
+    const hint = hintInput ? hintInput.value.trim() : '';
+    if (!hint) return;
+    state.messages.push({ role: 'user', content: `Extra detail: ${hint}` });
+    hintInput.value = '';
+    document.getElementById('hint-addon').style.display = 'none';
+    askNextQuestion();
+}
+
+window.saveResult        = saveResult;
+window.submitHint        = submitHint;
+window.selectMascot      = selectMascot;
+window.selectCompanion   = selectCompanion;
+window.selectToggle      = selectToggle;
+window.selectTheme       = selectTheme;
+window.selectColourBlind = selectColourBlind;
+window.saveSetup         = saveSetup;
+window.wizardNext        = wizardNext;
+window.wizardBack        = wizardBack;
+window.respondDay        = respondDay;
+window.startFromText     = startFromText;
+window.selectCategory    = selectCategory;
+window.showCategoryPage  = showCategoryPage;
+window.showPage          = showPage;
+window.showInfoPage      = showInfoPage;
+window.memoryAnswer      = memoryAnswer;
+window.startQuestioning  = startQuestioning;
+window.answerQuestion    = answerQuestion;
+window.startOver         = startOver;
+window.noneOfThese       = noneOfThese;
+window.searchResult      = searchResult;
+window.deleteHistoryItem = deleteHistoryItem;
+window.reuseHistory      = reuseHistory;
+window.clearHistory      = clearHistory;
+</script>
+</body>
+</html>
