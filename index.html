@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinditPal – Find What's On Your Mind</title>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -2555,8 +2557,13 @@ async function askNextQuestion() {
 
     // --------------------------------------------------------
     // PROXY WORKER URL - paste your Cloudflare Worker URL here
-    const PROXY_URL = 'https://finditpal-proxy.lbaranikumar.workers.dev/';
+    const PROXY_URL = 'https://YOUR_WORKER.workers.dev';
     // --------------------------------------------------------
+
+    if (PROXY_URL.includes('YOUR_WORKER')) {
+        showError('No proxy URL set. Open the HTML file and replace YOUR_WORKER.workers.dev with your Cloudflare Worker URL.');
+        return;
+    }
 
     try {
         const res = await fetch(PROXY_URL, {
@@ -2572,10 +2579,21 @@ async function askNextQuestion() {
             })
         });
 
+        if (!res.ok) {
+            showError(`Worker error ${res.status}: ${res.statusText}. Check your Cloudflare Worker is deployed and the ANTHROPIC_KEY secret is saved.`);
+            return;
+        }
+
         const data = await res.json();
 
         if (data.error) {
-            showError(data.error.message || 'API error. Check your key and try again.');
+            showError(`Anthropic error: ${data.error.message || JSON.stringify(data.error)}`);
+            return;
+        }
+
+        if (!data.content || !data.content[0]) {
+            showError('Unexpected response from API. Try again.');
+            console.error('Raw response:', data);
             return;
         }
 
@@ -2605,7 +2623,8 @@ async function askNextQuestion() {
         document.getElementById('dynamic-answers').style.display = 'flex';
 
     } catch(err) {
-        showError('Something went wrong. Please check your API key in settings and try again.');
+        console.error('Fetch failed:', err);
+        showError(`Connection failed: ${err.message}. Make sure your Worker URL is correct and the Worker is deployed.`);
     }
 }
 
