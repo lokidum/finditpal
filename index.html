@@ -382,28 +382,32 @@
 
         /* LOGO IMAGE */
         .site-logo {
-            height: 56px;
+            height: auto;
             width: auto;
             display: block;
-            border-radius: 16px;
-            background: #111318;
-            padding: 6px 14px;
         }
 
+        /* Setup page - big centred hero logo */
+        .site-logo-hero {
+            height: 100px;
+            width: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Top bar on inner pages - left aligned, compact */
         .site-logo-bar {
-            height: 36px;
-            padding: 4px 10px;
-            border-radius: 10px;
+            height: 40px;
+            width: auto;
+            display: block;
         }
 
+        /* Info pages top bar - slightly smaller */
         .site-logo-sm {
-            height: 28px;
-            padding: 3px 8px;
-            border-radius: 8px;
+            height: 32px;
+            width: auto;
+            display: block;
         }
-
-        .setup-logo { display: flex; justify-content: center; margin-bottom: 4px; }
-        .footer-logo-wrap { display: flex; align-items: center; }
 
         .setup-tagline { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 32px; }
 
@@ -1429,9 +1433,9 @@
     <div class="wizard-wrap">
 
         <!-- Logo -->
-        <div style="text-align:center; padding:28px 20px 0;">
-            <img src="logo.png" class="site-logo" alt="FinditPal">
-            <p class="setup-tagline">Find what's on the tip of your tongue</p>
+        <div style="text-align:center; padding:36px 20px 8px;">
+            <img src="logo.png" class="site-logo-hero" alt="FinditPal">
+            <p class="setup-tagline" style="margin-top:12px;">Find what's on the tip of your tongue</p>
         </div>
 
         <!-- Step indicators -->
@@ -1695,7 +1699,7 @@
     <div class="info-page-wrap">
         <div class="info-top-bar">
             <button class="icon-btn" onclick="showPage('landing-page')">←</button>
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-sm" alt="FinditPal">
             <div style="width:42px;"></div>
         </div>
         <div class="info-hero" style="background: linear-gradient(135deg, var(--primary-light), var(--surface2));">
@@ -1727,7 +1731,7 @@
     <div class="info-page-wrap">
         <div class="info-top-bar">
             <button class="icon-btn" onclick="showPage('landing-page')">←</button>
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-sm" alt="FinditPal">
             <div style="width:42px;"></div>
         </div>
         <div class="info-hero" style="background: linear-gradient(135deg, #EEF2FF, var(--surface2));">
@@ -1759,7 +1763,7 @@
     <div class="info-page-wrap">
         <div class="info-top-bar">
             <button class="icon-btn" onclick="showPage('landing-page')">←</button>
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-sm" alt="FinditPal">
             <div style="width:42px;"></div>
         </div>
         <div class="info-hero" style="background: linear-gradient(135deg, var(--secondary-light), var(--surface2));">
@@ -1784,7 +1788,7 @@
     <div class="info-page-wrap">
         <div class="info-top-bar">
             <button class="icon-btn" onclick="showPage('landing-page')">←</button>
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-sm" alt="FinditPal">
             <div style="width:42px;"></div>
         </div>
         <div class="info-hero" style="background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));">
@@ -1814,7 +1818,7 @@
     <div class="info-page-wrap">
         <div class="info-top-bar">
             <button class="icon-btn" onclick="showPage('landing-page')">←</button>
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-sm" alt="FinditPal">
             <div style="width:42px;"></div>
         </div>
         <div class="info-hero" style="background: linear-gradient(135deg, var(--secondary-light), var(--primary-light));">
@@ -1844,7 +1848,7 @@
     <div class="info-page-wrap">
         <div class="info-top-bar">
             <button class="icon-btn" onclick="showPage('landing-page')">←</button>
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-sm" alt="FinditPal">
             <div style="width:42px;"></div>
         </div>
         <div class="info-hero" style="background: linear-gradient(135deg, var(--primary-light), #EEF2FF);">
@@ -1879,7 +1883,7 @@
     <div class="info-page-wrap">
         <div class="info-top-bar">
             <button class="icon-btn" onclick="showPage('landing-page')">←</button>
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-sm" alt="FinditPal">
             <div style="width:42px;"></div>
         </div>
         <div class="info-hero" style="background: linear-gradient(135deg, var(--secondary-light), var(--surface2));">
@@ -1911,7 +1915,7 @@
 <div id="category-page" class="page">
     <div style="width:100%; max-width:640px; margin:0 auto;">
         <div class="top-bar">
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-bar" alt="FinditPal">
             <div style="display:flex; gap:8px;">
                 <button class="icon-btn" onclick="showPage('landing-page')" title="Back">←</button>
                 <button class="icon-btn" onclick="showPage('setup-page')" title="Settings">⚙️</button>
@@ -1928,7 +1932,7 @@
 <div id="memory-page" class="page">
     <div style="width:100%; max-width:640px; margin:0 auto;">
         <div class="top-bar">
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-bar" alt="FinditPal">
             <button class="icon-btn" onclick="showPage('category-page')" title="Back">←</button>
         </div>
         <div class="container" style="padding-top:0;">
@@ -1960,7 +1964,7 @@
 <div id="question-page" class="page">
     <div class="question-page-inner">
         <div class="top-bar" style="padding:16px 0; width:100%;">
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-bar" alt="FinditPal">
             <div style="display:flex; gap:8px;">
                 <button class="icon-btn" onclick="startOver()" title="Start over">↺</button>
                 <button class="icon-btn" onclick="showPage('setup-page')" title="Settings">⚙️</button>
@@ -2003,7 +2007,7 @@
 <div id="results-page" class="page">
     <div style="width:100%; max-width:640px; margin:0 auto;">
         <div class="top-bar">
-            <img src="logo.png" class="site-logo site-logo-bar" alt="FinditPal">
+            <img src="logo.png" class="site-logo-bar" alt="FinditPal">
             <button class="icon-btn" onclick="startOver()" title="Start over">↺</button>
         </div>
         <div class="container" style="padding-top:0;">
