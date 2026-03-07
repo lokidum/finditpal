@@ -696,8 +696,11 @@
         .result-img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+            object-position: center;
             display: block;
+            padding: 4px;
+            box-sizing: border-box;
         }
 
         .result-img-placeholder {
@@ -2916,28 +2919,162 @@ const CATEGORY_IMG_FALLBACK = {
     'Brands': '🏷️', 'Something Else': '🤔', 'General': '🔍'
 };
 
-// Fetch Wikipedia thumbnail for a given item name
-async function fetchWikiImage(item) {
+const TMDB_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjODU2OTcwZjYyMjhmNGU3ZTQyMmY1ZTI2OGVlNmNlMSIsIm5iZiI6MTc3Mjg3MTk4MC42MTMsInN1YiI6IjY5YWJlMTJjM2E2MjI1NDgwOTc5ZjRjNSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.iN7w6u8V8Sf_eG9sRF7z1nvmigwLQYe6ZQbNCH2Wq-s';
+const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
+
+// Extract a year from the item name if present e.g. "Inception 2010"
+function extractYearFromItem(item) {
+    const match = item.match(/\b(19|20)\d{2}\b/);
+    return match ? match[0] : null;
+}
+
+// Strip year from item name for cleaner searching
+function stripYear(item) {
+    return item.replace(/\b(19|20)\d{2}\b/, '').trim();
+}
+
+// Build TMDB query variants to maximise match rate for non-English titles
+function tmdbQueryVariants(item) {
+    const year = extractYearFromItem(item);
+    const clean = stripYear(item);
+    const variants = [clean];
+    if (year) variants.push(`${clean} y:${year}`);  // year filter
+    // Also try without any trailing parenthetical e.g. "Enthiran (Robot)"
+    const noParens = clean.replace(/\s*\(.*?\)\s*/g, '').trim();
+    if (noParens !== clean) variants.push(noParens);
+    return variants;
+}
+
+// Core TMDB search - tries each query variant until a poster is found
+async function tmdbSearch(endpoint, item) {
+    const variants = tmdbQueryVariants(item);
+    for (const query of variants) {
+        try {
+            const res = await fetch(
+                `https://api.themoviedb.org/3/search/${endpoint}?query=${encodeURIComponent(query)}&page=1&include_adult=false`,
+                { headers: { Authorization: `Bearer ${TMDB_TOKEN}`, 'Content-Type': 'application/json' } }
+            );
+            if (!res.ok) continue;
+            const data = await res.json();
+            const results = data?.results;
+            if (!results?.length) continue;
+            // Prefer results with a poster/profile
+            const withImg = results.find(r => r.poster_path || r.profile_path);
+            if (!withImg) continue;
+            const path = withImg.poster_path || withImg.profile_path;
+            return `${TMDB_IMG_BASE}${path}`;
+        } catch (e) { continue; }
+    }
+    return null;
+}
+
+// ---- TMDB: Movies ----
+async function fetchTMDBMovie(item) {
+    return tmdbSearch('movie', item);
+}
+
+// ---- TMDB: TV Shows ----
+async function fetchTMDBTV(item) {
+    return tmdbSearch('tv', item);
+}
+
+// ---- TMDB: People (celebrities, sports stars, actors) ----
+async function fetchTMDBPerson(item) {
+    return tmdbSearch('person', item);
+}
+
+// ---- Wikipedia: search then thumbnail ----
+async function searchWikiTitle(query) {
     try {
-        const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(item)}`;
+        const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=1&format=json&origin=*`;
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        const results = data?.query?.search;
+        return results?.length ? results[0].title : null;
+    } catch (e) { return null; }
+}
+
+async function getWikiThumbnail(title) {
+    try {
+        const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
         const res = await fetch(url);
         if (!res.ok) return null;
         const data = await res.json();
         return data?.thumbnail?.source || data?.originalimage?.source || null;
-    } catch (e) {
-        return null;
-    }
+    } catch (e) { return null; }
 }
 
-// Render image in a result card's image slot
+// ---- Main waterfall by category ----
+async function fetchWikiImage(item) {
+    const cat = state.selectedCategory || 'General';
+
+    if (cat === 'Movies') {
+        return (await fetchTMDBMovie(item))
+            || (await fetchWikiImage_inner(item, [`${item} film`, `${item} movie`, item]));
+    }
+
+    if (cat === 'TV Shows') {
+        return (await fetchTMDBTV(item))
+            || (await fetchWikiImage_inner(item, [`${item} TV series`, `${item} series`, item]));
+    }
+
+    if (cat === 'Celebrities') {
+        return (await fetchTMDBPerson(item))
+            || (await fetchWikiImage_inner(item, [`${item} actor`, `${item} actress`, `${item} celebrity`, item]));
+    }
+
+    if (cat === 'Sports') {
+        return (await fetchTMDBPerson(item))
+            || (await fetchWikiImage_inner(item, [`${item} footballer`, `${item} cricketer`, `${item} athlete`, `${item} player`, item]));
+    }
+
+    const wikiQueries = {
+        'Music':               [`${item} singer`, `${item} musician`, `${item} band`, `${item} album`, item],
+        'Video Games':         [`${item} video game`, `${item} game`, item],
+        'Books':               [`${item} novel`, `${item} book`, item],
+        'Food':                [`${item} dish`, `${item} food`, `${item} cuisine`, item],
+        'Animals':             [`${item} animal`, `${item} species`, item],
+        'Countries':           [item],
+        'Cities':              [`${item} city`, item],
+        'Brands':              [`${item} company`, `${item} brand`, item],
+        'Apps & Websites':     [`${item} app`, `${item} website`, item],
+        'Fictional Characters':[`${item} character`, `${item} fictional character`, item],
+        'Colours':             [item],
+        'Something Else':      [item],
+        'General':             [item],
+    };
+
+    return fetchWikiImage_inner(item, wikiQueries[cat] || [item]);
+}
+
+// Internal wiki fetch used by waterfall
+async function fetchWikiImage_inner(item, queries) {
+    for (const query of queries) {
+        const title = await searchWikiTitle(query);
+        if (!title) continue;
+        const img = await getWikiThumbnail(title);
+        if (img) return img;
+    }
+    return null;
+}
+
+// Render image in result card slot
 async function loadResultImage(imgWrapId, item) {
     const wrap = document.getElementById(imgWrapId);
     if (!wrap) return;
+    const fallback = CATEGORY_IMG_FALLBACK[state.selectedCategory] || '🔍';
     const imgSrc = await fetchWikiImage(item);
     if (imgSrc) {
-        wrap.innerHTML = `<img class="result-img" src="${imgSrc}" alt="${item}" onerror="this.parentElement.innerHTML='<span class=result-img-placeholder>${CATEGORY_IMG_FALLBACK[state.selectedCategory] || '🔍'}</span>'">`;
+        const img = document.createElement('img');
+        img.className = 'result-img';
+        img.alt = item;
+        img.src = imgSrc;
+        img.onerror = () => { wrap.innerHTML = `<span class="result-img-placeholder">${fallback}</span>`; };
+        wrap.innerHTML = '';
+        wrap.appendChild(img);
     } else {
-        wrap.innerHTML = `<span class="result-img-placeholder">${CATEGORY_IMG_FALLBACK[state.selectedCategory] || '🔍'}</span>`;
+        wrap.innerHTML = `<span class="result-img-placeholder">${fallback}</span>`;
     }
 }
 
