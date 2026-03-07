@@ -2928,42 +2928,73 @@ function extractYearFromItem(item) {
     return match ? match[0] : null;
 }
 
-// Strip year from item name for cleaner searching
-function stripYear(item) {
-    return item.replace(/\b(19|20)\d{2}\b/, '').trim();
+// Aggressively clean item name before searching
+// Handles cases like "Theri 2016", "Vijay's Theri", "Theri - Tamil action film", "Theri (Tamil)"
+function cleanItemName(item) {
+    let s = item.trim();
+
+    // Remove possessives e.g. "Vijay's Theri" -> "Theri"
+    s = s.replace(/^\w+'s\s+/i, '');
+
+    // Remove anything after a dash or hyphen with descriptor words
+    s = s.replace(/\s*[-–]\s*(tamil|telugu|hindi|korean|japanese|bollywood|hollywood|action|drama|film|movie|series|song|album|dish|food|athlete|player|footballer|cricketer|singer|band|actor|actress|celebrity|character|game|novel|book|app|website|brand|company)\b.*/i, '');
+
+    // Remove parentheticals entirely e.g. "(Tamil)", "(2016)", "(film)"
+    s = s.replace(/\s*\(.*?\)\s*/g, '').trim();
+
+    // Remove year
+    s = s.replace(/\b(19|20)\d{2}\b/, '').trim();
+
+    // Remove trailing/leading punctuation
+    s = s.replace(/^[\s\-–,]+|[\s\-–,]+$/g, '').trim();
+
+    return s;
 }
 
-// Build TMDB query variants to maximise match rate for non-English titles
+// Build search variants - clean name first, then with year hint
 function tmdbQueryVariants(item) {
     const year = extractYearFromItem(item);
-    const clean = stripYear(item);
+    const clean = cleanItemName(item);
     const variants = [clean];
-    if (year) variants.push(`${clean} y:${year}`);  // year filter
-    // Also try without any trailing parenthetical e.g. "Enthiran (Robot)"
-    const noParens = clean.replace(/\s*\(.*?\)\s*/g, '').trim();
-    if (noParens !== clean) variants.push(noParens);
-    return variants;
+    // Try with year filter for disambiguation
+    if (year) variants.push(`${clean} y:${year}`);
+    // Try original uncleaned name as last resort
+    const stripped = item.replace(/\b(19|20)\d{2}\b/, '').replace(/\s*\(.*?\)\s*/g, '').trim();
+    if (stripped !== clean) variants.push(stripped);
+    return [...new Set(variants)]; // deduplicate
 }
 
 // Core TMDB search - tries each query variant until a poster is found
 async function tmdbSearch(endpoint, item) {
     const variants = tmdbQueryVariants(item);
+    console.log(`[IMG] TMDB ${endpoint} search variants:`, variants);
     for (const query of variants) {
         try {
-            const res = await fetch(
-                `https://api.themoviedb.org/3/search/${endpoint}?query=${encodeURIComponent(query)}&page=1&include_adult=false`,
-                { headers: { Authorization: `Bearer ${TMDB_TOKEN}`, 'Content-Type': 'application/json' } }
-            );
-            if (!res.ok) continue;
+            const url = `https://api.themoviedb.org/3/search/${endpoint}?query=${encodeURIComponent(query)}&page=1&include_adult=false`;
+            console.log(`[IMG] Fetching TMDB:`, url);
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${TMDB_TOKEN}`,
+                    'Accept': 'application/json'
+                }
+            });
+            console.log(`[IMG] TMDB status:`, res.status);
+            if (!res.ok) { console.log(`[IMG] TMDB not ok, skipping`); continue; }
             const data = await res.json();
             const results = data?.results;
+            console.log(`[IMG] TMDB results count:`, results?.length, results?.[0]);
             if (!results?.length) continue;
-            // Prefer results with a poster/profile
             const withImg = results.find(r => r.poster_path || r.profile_path);
-            if (!withImg) continue;
+            if (!withImg) { console.log(`[IMG] No poster found in results`); continue; }
             const path = withImg.poster_path || withImg.profile_path;
-            return `${TMDB_IMG_BASE}${path}`;
-        } catch (e) { continue; }
+            const imgUrl = `${TMDB_IMG_BASE}${path}`;
+            console.log(`[IMG] TMDB success:`, imgUrl);
+            return imgUrl;
+        } catch (e) {
+            console.log(`[IMG] TMDB error:`, e.message);
+            continue;
+        }
     }
     return null;
 }
@@ -2987,12 +3018,18 @@ async function fetchTMDBPerson(item) {
 async function searchWikiTitle(query) {
     try {
         const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=1&format=json&origin=*`;
+        console.log(`[IMG] Wiki search:`, query);
         const res = await fetch(url);
         if (!res.ok) return null;
         const data = await res.json();
         const results = data?.query?.search;
-        return results?.length ? results[0].title : null;
-    } catch (e) { return null; }
+        const title = results?.length ? results[0].title : null;
+        console.log(`[IMG] Wiki title found:`, title);
+        return title;
+    } catch (e) {
+        console.log(`[IMG] Wiki search error:`, e.message);
+        return null;
+    }
 }
 
 async function getWikiThumbnail(title) {
@@ -3001,8 +3038,13 @@ async function getWikiThumbnail(title) {
         const res = await fetch(url);
         if (!res.ok) return null;
         const data = await res.json();
-        return data?.thumbnail?.source || data?.originalimage?.source || null;
-    } catch (e) { return null; }
+        const img = data?.thumbnail?.source || data?.originalimage?.source || null;
+        console.log(`[IMG] Wiki thumbnail for "${title}":`, img ? 'found' : 'none');
+        return img;
+    } catch (e) {
+        console.log(`[IMG] Wiki thumbnail error:`, e.message);
+        return null;
+    }
 }
 
 // ---- Main waterfall by category ----
@@ -3093,7 +3135,8 @@ function handleGuess(reply) {
         return;
     }
 
-    carouselItems = items.slice(0, 3);
+    // Clean each item name before display and image lookup
+    carouselItems = items.slice(0, 3).map(cleanItemName);
     currentCarouselIndex = 0;
 
     const mascotMsg = lines.filter(l => !l.includes('GUESS:')).join(' ').trim();
@@ -3420,6 +3463,15 @@ GUESSING:
 - Format EXACTLY:
 [One short encouraging sentence]
 GUESS: [first guess], [second guess], [third guess]
+
+CRITICAL GUESS RULES:
+- Each guess must be the OFFICIAL TITLE ONLY. No descriptions, no years, no language labels, no possessives.
+- BAD: "Theri 2016", "Vijay's Theri", "Theri - Tamil action film", "Theri (Tamil)"
+- GOOD: "Theri"
+- BAD: "Cristiano Ronaldo (footballer)", "Ronaldo - soccer player"
+- GOOD: "Cristiano Ronaldo"
+- Use the most internationally recognised version of the title or name.
+- If a Tamil/Hindi/Korean title has a well-known English title, use the original native title.
 
 If user says "not sure", accept it and approach from a completely different angle. Never repeat a similar question.`;
 }
