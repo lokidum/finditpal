@@ -2817,7 +2817,7 @@ function parseQuestion(reply) {
     // Find the actual question line (ends with ?)
     const questionLine = lines.find(l => l.endsWith('?')) || lines[lines.length - 1] || reply;
 
-    // Check for OPTIONS: structured format first
+    // Check for OPTIONS: structured format only - no auto or-detection
     const optLine = lines.find(l => l.startsWith('OPTIONS:'));
     if (optLine) {
         const rawOpts = optLine.replace('OPTIONS:', '').trim().split('|').map(s => s.trim()).filter(Boolean);
@@ -2828,29 +2828,7 @@ function parseQuestion(reply) {
         return { question: cleanQ, options: opts };
     }
 
-    // Detect "X or Y?" choice question
-    // Only match if "or" appears in the latter half of the question (avoids false positives)
-    const orMatch = questionLine.match(/^(.{15,}?)\s+or\s+([\w][\w\s,'-]{2,}?)\??$/i);
-    if (orMatch) {
-        const fullQ = questionLine;
-        const optA  = orMatch[1].replace(/^.*(involve|have|is|was|does|did|are|include)\s+/i, '').trim();
-        const optB  = orMatch[2].replace(/\?$/, '').trim();
-
-        // Only treat as choice question if both options are reasonably short phrases
-        if (optA.split(' ').length <= 6 && optB.split(' ').length <= 6) {
-            return {
-                question: fullQ,
-                options: [
-                    { label: capitalise(optA), value: capitalise(optA), style: 'choice-a', context: fullQ },
-                    { label: capitalise(optB), value: capitalise(optB), style: 'choice-b', context: fullQ },
-                    { label: 'Not sure', value: 'Not sure', style: 'maybe' },
-                    { label: 'Neither', value: 'Neither of those', style: 'neither', context: fullQ }
-                ]
-            };
-        }
-    }
-
-    // Standard yes/no
+    // Always yes/no - the AI must not generate "or" questions
     return {
         question: questionLine,
         options: [
@@ -3053,23 +3031,23 @@ async function getWikiThumbnail(title) {
 
 // ---- iTunes Search API: album art for songs, albums, artists (free, no key needed) ----
 async function fetchItunesArt(item) {
-    // Try as a song first, then album, then artist
     const searches = [
-        `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=song&limit=3`,
-        `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=album&limit=3`,
-        `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=musicArtist&limit=3`,
+        `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=song&limit=5&country=US`,
+        `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=album&limit=5&country=US`,
     ];
     for (const url of searches) {
         try {
-            console.log(`[IMG] iTunes search:`, url);
-            const res = await fetch(url);
-            if (!res.ok) continue;
+            console.log(`[IMG] iTunes:`, url);
+            const res = await fetch(url, { mode: 'cors' });
+            if (!res.ok) { console.log(`[IMG] iTunes status ${res.status}`); continue; }
             const data = await res.json();
-            const result = data?.results?.[0];
-            if (!result?.artworkUrl100) continue;
-            // Upgrade from 100x100 to 600x600
-            const art = result.artworkUrl100.replace('100x100bb', '600x600bb');
-            console.log(`[IMG] iTunes art found:`, art);
+            // Find first result that has artwork and whose name reasonably matches
+            const result = data?.results?.find(r => r.artworkUrl100);
+            if (!result) { console.log(`[IMG] iTunes no artwork in results`); continue; }
+            const art = result.artworkUrl100
+                .replace('100x100bb', '600x600bb')
+                .replace('100x100bb.jpg', '600x600bb.jpg');
+            console.log(`[IMG] iTunes art:`, art);
             return art;
         } catch (e) {
             console.log(`[IMG] iTunes error:`, e.message);
@@ -3126,13 +3104,15 @@ async function fetchWikiImage(item) {
             ]));
     }
 
-    // Music - iTunes Search API first (returns proper album art), Wikipedia fallback
+    // Music - iTunes first, then Wikipedia targeting song/album pages only (never artist pages)
     if (cat === 'Music') {
         return (await fetchItunesArt(cleanItem))
             || (await fetchWikiImage_inner(cleanItem, [
-                `${cleanItem} album`,
+                `${cleanItem} (song)`,
+                `${cleanItem} (single)`,
+                `${cleanItem} (album)`,
                 `${cleanItem} song`,
-                cleanItem
+                `${cleanItem} album`,
             ]));
     }
 
@@ -3486,8 +3466,11 @@ PERSONALITY: ${personality}
 Express your personality briefly - one short phrase per response maximum. Never let personality slow the questioning.
 
 CRITICAL RULE - QUESTION FORMAT:
-- Ask ONLY pure yes/no questions. Answers are: Yes, No, Not sure.
-- NEVER ask "or" questions like "Is it X or Y?" - this breaks the interface.
+- Ask ONLY pure yes/no questions. Every question must be answerable with Yes, No, or Not sure.
+- NEVER use the word "or" in a question. Not ever. Not even in natural phrasing.
+- WRONG: "Is this a song by an artist or band?" / "Is it from Asia or Europe?" / "Was it made by a person or a group?"
+- RIGHT: "Is it a solo artist?" / "Is it from Asia?" / "Is it made by one person?"
+- If you want to distinguish between two things, ask about one of them with a plain yes/no. Never combine them with "or".
 - One question per response only. No lists. No explanations.
 
 QUESTION STYLE: ${styleGuide[state.simplicity]}
