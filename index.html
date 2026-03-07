@@ -3106,7 +3106,10 @@ async function loadResultImage(imgWrapId, item) {
     const wrap = document.getElementById(imgWrapId);
     if (!wrap) return;
     const fallback = CATEGORY_IMG_FALLBACK[state.selectedCategory] || '🔍';
-    const imgSrc = await fetchWikiImage(item);
+    // Always clean before lookup - safety net in case AI still returns dirty names
+    const cleanItem = cleanItemName(item);
+    console.log(`[IMG] loadResultImage: raw="${item}" clean="${cleanItem}"`);
+    const imgSrc = await fetchWikiImage(cleanItem);
     if (imgSrc) {
         const img = document.createElement('img');
         img.className = 'result-img';
@@ -3464,16 +3467,24 @@ GUESSING:
 [One short encouraging sentence]
 GUESS: [first guess], [second guess], [third guess]
 
-CRITICAL GUESS RULES:
-- Each guess must be the OFFICIAL TITLE ONLY. No descriptions, no years, no language labels, no possessives.
-- BAD: "Theri 2016", "Vijay's Theri", "Theri - Tamil action film", "Theri (Tamil)"
-- GOOD: "Theri"
-- BAD: "Cristiano Ronaldo (footballer)", "Ronaldo - soccer player"
-- GOOD: "Cristiano Ronaldo"
-- Use the most internationally recognised version of the title or name.
-- If a Tamil/Hindi/Korean title has a well-known English title, use the original native title.
+CRITICAL NAME FORMAT - THE MOST IMPORTANT RULE:
+Each guess must be the OFFICIAL TITLE OR NAME ONLY. Nothing else. No years, no language labels, no possessives, no descriptions, no cast names, no director names, no parentheticals.
+- WRONG: "Theri 2016" / "Vijay's Theri" / "Theri - Tamil film" / "Theri (2016)" / "Atlee's Theri" / "Theri starring Vijay"
+- RIGHT: "Theri"
+- WRONG: "Cristiano Ronaldo (footballer)" / "Ronaldo - soccer player"
+- RIGHT: "Cristiano Ronaldo"
+One clean name only. Nothing appended. Nothing in brackets.
 
-If user says "not sure", accept it and approach from a completely different angle. Never repeat a similar question.`;
+SMART RELATED GUESSES - VERY IMPORTANT:
+When you are highly confident about your first guess, slots 2 and 3 must be genuinely related, not random:
+- Movies/TV: Use other films by the same lead actor or director. If first guess is "Theri", use "Mersal" and "Bigil".
+- Sports people: Use the most comparable athletes in the same sport and era. If first guess is "Cristiano Ronaldo", use "Lionel Messi" and "Neymar".
+- Music artists: Use artists from the same genre, era, or language. If first guess is "AR Rahman", use "Ilaiyaraaja" and "Anirudh Ravichander".
+- Animals: Use animals from the same family or habitat. If first guess is "Snow Leopard", use "Clouded Leopard" and "Cheetah".
+- Food: Use dishes from the same cuisine or style. If first guess is "Pad Thai", use "Pad See Ew" and "Khao Pad".
+- Books: Use books by the same author or same genre. If first guess is "Harry Potter", use "The Hobbit" and "Percy Jackson".
+
+If user says "not sure", accept it and approach from a completely different angle. Never repeat a similar question.\`;
 }
 
 // ============================================================
