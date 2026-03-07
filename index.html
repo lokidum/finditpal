@@ -684,23 +684,23 @@
 
         .result-img-wrap {
             width: 100%;
-            height: 200px;
+            height: 220px;
             background: var(--surface2);
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
             position: relative;
+            border-radius: 0;
         }
 
         .result-img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            object-position: center;
+            object-fit: contain !important;
+            object-position: center center;
             display: block;
-            padding: 4px;
-            box-sizing: border-box;
+            background: var(--surface2);
         }
 
         .result-img-placeholder {
@@ -3034,11 +3034,15 @@ async function searchWikiTitle(query) {
 
 async function getWikiThumbnail(title) {
     try {
-        const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+        // Use pageimages API - much more reliable than REST summary for regional content
+        const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=500&format=json&origin=*`;
         const res = await fetch(url);
         if (!res.ok) return null;
         const data = await res.json();
-        const img = data?.thumbnail?.source || data?.originalimage?.source || null;
+        const pages = data?.query?.pages;
+        if (!pages) return null;
+        const page = Object.values(pages)[0];
+        const img = page?.thumbnail?.source || null;
         console.log(`[IMG] Wiki thumbnail for "${title}":`, img ? 'found' : 'none');
         return img;
     } catch (e) {
@@ -3050,44 +3054,67 @@ async function getWikiThumbnail(title) {
 // ---- Main waterfall by category ----
 async function fetchWikiImage(item) {
     const cat = state.selectedCategory || 'General';
+    const cleanItem = cleanItemName(item);
 
     if (cat === 'Movies') {
-        return (await fetchTMDBMovie(item))
-            || (await fetchWikiImage_inner(item, [`${item} film`, `${item} movie`, item]));
+        return (await fetchTMDBMovie(cleanItem))
+            || (await fetchWikiImage_inner(cleanItem, [
+                `${cleanItem} (film)`,
+                `${cleanItem} film`,
+                `${cleanItem} movie`,
+                cleanItem
+            ]));
     }
 
     if (cat === 'TV Shows') {
-        return (await fetchTMDBTV(item))
-            || (await fetchWikiImage_inner(item, [`${item} TV series`, `${item} series`, item]));
+        return (await fetchTMDBTV(cleanItem))
+            || (await fetchWikiImage_inner(cleanItem, [
+                `${cleanItem} (TV series)`,
+                `${cleanItem} TV series`,
+                `${cleanItem} series`,
+                cleanItem
+            ]));
     }
 
     if (cat === 'Celebrities') {
-        return (await fetchTMDBPerson(item))
-            || (await fetchWikiImage_inner(item, [`${item} actor`, `${item} actress`, `${item} celebrity`, item]));
+        return (await fetchTMDBPerson(cleanItem))
+            || (await fetchWikiImage_inner(cleanItem, [
+                `${cleanItem} actor`,
+                `${cleanItem} actress`,
+                `${cleanItem} (actor)`,
+                cleanItem
+            ]));
     }
 
     if (cat === 'Sports') {
-        return (await fetchTMDBPerson(item))
-            || (await fetchWikiImage_inner(item, [`${item} footballer`, `${item} cricketer`, `${item} athlete`, `${item} player`, item]));
+        return (await fetchTMDBPerson(cleanItem))
+            || (await fetchWikiImage_inner(cleanItem, [
+                `${cleanItem} footballer`,
+                `${cleanItem} cricketer`,
+                `${cleanItem} athlete`,
+                `${cleanItem} (cricketer)`,
+                `${cleanItem} (footballer)`,
+                cleanItem
+            ]));
     }
 
     const wikiQueries = {
-        'Music':               [`${item} singer`, `${item} musician`, `${item} band`, `${item} album`, item],
-        'Video Games':         [`${item} video game`, `${item} game`, item],
-        'Books':               [`${item} novel`, `${item} book`, item],
-        'Food':                [`${item} dish`, `${item} food`, `${item} cuisine`, item],
-        'Animals':             [`${item} animal`, `${item} species`, item],
-        'Countries':           [item],
-        'Cities':              [`${item} city`, item],
-        'Brands':              [`${item} company`, `${item} brand`, item],
-        'Apps & Websites':     [`${item} app`, `${item} website`, item],
-        'Fictional Characters':[`${item} character`, `${item} fictional character`, item],
-        'Colours':             [item],
-        'Something Else':      [item],
-        'General':             [item],
+        'Music':               [`${cleanItem} singer`, `${cleanItem} musician`, `${cleanItem} band`, `${cleanItem} album`, cleanItem],
+        'Video Games':         [`${cleanItem} video game`, `${cleanItem} game`, cleanItem],
+        'Books':               [`${cleanItem} novel`, `${cleanItem} book`, cleanItem],
+        'Food':                [`${cleanItem} dish`, `${cleanItem} food`, `${cleanItem} cuisine`, cleanItem],
+        'Animals':             [`${cleanItem} animal`, `${cleanItem} species`, cleanItem],
+        'Countries':           [cleanItem],
+        'Cities':              [`${cleanItem} city`, cleanItem],
+        'Brands':              [`${cleanItem} company`, `${cleanItem} brand`, cleanItem],
+        'Apps & Websites':     [`${cleanItem} app`, `${cleanItem} website`, cleanItem],
+        'Fictional Characters':[`${cleanItem} character`, `${cleanItem} fictional character`, cleanItem],
+        'Colours':             [cleanItem],
+        'Something Else':      [cleanItem],
+        'General':             [cleanItem],
     };
 
-    return fetchWikiImage_inner(item, wikiQueries[cat] || [item]);
+    return fetchWikiImage_inner(cleanItem, wikiQueries[cat] || [cleanItem]);
 }
 
 // Internal wiki fetch used by waterfall
