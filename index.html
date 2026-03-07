@@ -3029,21 +3029,22 @@ async function getWikiThumbnail(title) {
     }
 }
 
-// ---- iTunes Search API: album art for songs, albums, artists (free, no key needed) ----
+// ---- iTunes Search API via Cloudflare Worker proxy (bypasses CORS) ----
 async function fetchItunesArt(item) {
+    const PROXY = 'https://finditpal-proxy.lbaranikumar.workers.dev';
     const searches = [
         `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=song&limit=5&country=US`,
         `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=album&limit=5&country=US`,
     ];
-    for (const url of searches) {
+    for (const itunesUrl of searches) {
         try {
-            console.log(`[IMG] iTunes:`, url);
-            const res = await fetch(url, { mode: 'cors' });
-            if (!res.ok) { console.log(`[IMG] iTunes status ${res.status}`); continue; }
+            const proxyUrl = `${PROXY}?proxy=itunes&url=${encodeURIComponent(itunesUrl)}`;
+            console.log(`[IMG] iTunes via proxy:`, itunesUrl);
+            const res = await fetch(proxyUrl);
+            if (!res.ok) { console.log(`[IMG] iTunes proxy status ${res.status}`); continue; }
             const data = await res.json();
-            // Find first result that has artwork and whose name reasonably matches
             const result = data?.results?.find(r => r.artworkUrl100);
-            if (!result) { console.log(`[IMG] iTunes no artwork in results`); continue; }
+            if (!result) { console.log(`[IMG] iTunes no artwork`); continue; }
             const art = result.artworkUrl100
                 .replace('100x100bb', '600x600bb')
                 .replace('100x100bb.jpg', '600x600bb.jpg');
