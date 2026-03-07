@@ -3051,6 +3051,34 @@ async function getWikiThumbnail(title) {
     }
 }
 
+// ---- iTunes Search API: album art for songs, albums, artists (free, no key needed) ----
+async function fetchItunesArt(item) {
+    // Try as a song first, then album, then artist
+    const searches = [
+        `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=song&limit=3`,
+        `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=album&limit=3`,
+        `https://itunes.apple.com/search?term=${encodeURIComponent(item)}&media=music&entity=musicArtist&limit=3`,
+    ];
+    for (const url of searches) {
+        try {
+            console.log(`[IMG] iTunes search:`, url);
+            const res = await fetch(url);
+            if (!res.ok) continue;
+            const data = await res.json();
+            const result = data?.results?.[0];
+            if (!result?.artworkUrl100) continue;
+            // Upgrade from 100x100 to 600x600
+            const art = result.artworkUrl100.replace('100x100bb', '600x600bb');
+            console.log(`[IMG] iTunes art found:`, art);
+            return art;
+        } catch (e) {
+            console.log(`[IMG] iTunes error:`, e.message);
+            continue;
+        }
+    }
+    return null;
+}
+
 // ---- Main waterfall by category ----
 async function fetchWikiImage(item) {
     const cat = state.selectedCategory || 'General';
@@ -3098,8 +3126,17 @@ async function fetchWikiImage(item) {
             ]));
     }
 
+    // Music - iTunes Search API first (returns proper album art), Wikipedia fallback
+    if (cat === 'Music') {
+        return (await fetchItunesArt(cleanItem))
+            || (await fetchWikiImage_inner(cleanItem, [
+                `${cleanItem} album`,
+                `${cleanItem} song`,
+                cleanItem
+            ]));
+    }
+
     const wikiQueries = {
-        'Music':               [`${cleanItem} singer`, `${cleanItem} musician`, `${cleanItem} band`, `${cleanItem} album`, cleanItem],
         'Video Games':         [`${cleanItem} video game`, `${cleanItem} game`, cleanItem],
         'Books':               [`${cleanItem} novel`, `${cleanItem} book`, cleanItem],
         'Food':                [`${cleanItem} dish`, `${cleanItem} food`, `${cleanItem} cuisine`, cleanItem],
