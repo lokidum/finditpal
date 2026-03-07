@@ -3012,16 +3012,41 @@ async function searchWikiTitle(query) {
 
 async function getWikiThumbnail(title) {
     try {
-        // Use pageimages API - much more reliable than REST summary for regional content
-        const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=500&format=json&origin=*`;
-        const res = await fetch(url);
-        if (!res.ok) return null;
-        const data = await res.json();
-        const pages = data?.query?.pages;
+        // Try media-list first - gets actual page images including infobox covers
+        const mediaUrl = `https://en.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(title)}`;
+        const res = await fetch(mediaUrl);
+        if (res.ok) {
+            const data = await res.json();
+            const items = data?.items || [];
+            // Find first image that looks like a cover/poster (not a logo, icon, or flag)
+            const cover = items.find(item => {
+                if (item.type !== 'image') return false;
+                const src = (item.srcset?.[0]?.src || item.original?.source || '').toLowerCase();
+                const title = (item.titles?.canonical || '').toLowerCase();
+                // Skip flags, icons, logos, wikimedia commons generic images
+                if (title.includes('flag') || title.includes('icon') || title.includes('logo')) return false;
+                if (src.includes('flag') || src.includes('icon')) return false;
+                return true;
+            });
+            if (cover) {
+                const src = cover.srcset?.[0]?.src || cover.original?.source;
+                if (src) {
+                    const imgUrl = src.startsWith('//') ? `https:${src}` : src;
+                    console.log(`[IMG] Wiki media-list thumbnail for "${title}": found`);
+                    return imgUrl;
+                }
+            }
+        }
+        // Fallback to pageimages API
+        const pageUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&pithumbsize=500&format=json&origin=*`;
+        const res2 = await fetch(pageUrl);
+        if (!res2.ok) return null;
+        const data2 = await res2.json();
+        const pages = data2?.query?.pages;
         if (!pages) return null;
         const page = Object.values(pages)[0];
         const img = page?.thumbnail?.source || null;
-        console.log(`[IMG] Wiki thumbnail for "${title}":`, img ? 'found' : 'none');
+        console.log(`[IMG] Wiki pageimages for "${title}":`, img ? 'found' : 'none');
         return img;
     } catch (e) {
         console.log(`[IMG] Wiki thumbnail error:`, e.message);
