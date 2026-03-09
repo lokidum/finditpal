@@ -642,6 +642,20 @@
 
         <div id="question-error" class="error-msg" style="width:100%;"></div>
 
+        <!-- Mid-session memory jog — shown after Q10 -->
+        <div id="memory-jog" class="memory-jog-card" style="display:none;">
+            <div class="memory-jog-icon">💭</div>
+            <div class="memory-jog-heading">Pause for a moment…</div>
+            <p class="memory-jog-body">Has anything new come to mind while we've been talking? Even a small detail, a feeling, or a word fragment can help.</p>
+            <textarea id="memory-jog-input" class="memory-jog-textarea"
+                placeholder="Type anything that's surfaced... or leave blank and continue."
+                maxlength="200"
+                onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitMemoryJog();}"></textarea>
+            <div class="memory-jog-actions">
+                <button class="btn btn-primary" style="width:100%;" onclick="submitMemoryJog()">Continue →</button>
+            </div>
+        </div>
+
         <button class="btn btn-ghost" style="font-size:0.85rem; padding:10px 22px;" onclick="startOver()">
             ↺ Start over
         </button>
@@ -692,6 +706,7 @@
     </div>
 </div>
 
+<script src="logger.js"></script>
 <script src="app.js" defer></script>
 </body>
 </html>

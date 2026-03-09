@@ -471,6 +471,7 @@ function startQuestioning() {
     if (memText) state.initialMemory = memText;
 
     state.messages = [];
+    state.researchDone = false;
     questionNum = 0;
 
     // Reset progress bar and question display
@@ -483,6 +484,7 @@ function startQuestioning() {
 
     updateAllMascots();
     showPage('question-page');
+    if (window.FIPLogger) FIPLogger.startSession(state.selectedCategory, state.mascot, state.initialMemory);
     askNextQuestion();
 }
 
@@ -496,6 +498,8 @@ async function askNextQuestion() {
     document.getElementById('dynamic-answers').style.display = 'none';
     document.getElementById('hint-addon').style.display = 'none';
     document.getElementById('question-error').style.display = 'none';
+    const jogCard = document.getElementById('memory-jog');
+    if (jogCard) jogCard.style.display = 'none';
 
     // Build initial user message if first question
     if (state.messages.length === 0) {
@@ -509,9 +513,9 @@ async function askNextQuestion() {
         state.messages.push({ role: 'user', content: msg });
     }
 
-    // Hard limit - force a guess at question 21
-    if (questionNum >= 21) {
-        state.messages.push({ role: 'user', content: 'You have reached the 21 question limit. Please make your best guess now using the GUESS: format.' });
+    // Soft prompt after 30 questions to encourage a guess, but don't force it
+    if (questionNum >= 30 && questionNum % 5 === 0) {
+        state.messages.push({ role: 'user', content: 'We\'ve been going a while — if you have a strong feeling, make your best guess now. Otherwise keep asking!' });
     }
 
     // --------------------------------------------------------
@@ -565,6 +569,38 @@ async function askNextQuestion() {
             return;
         }
 
+        // Check for RESEARCH request - AI wants to look up a Wikipedia article
+        if (reply.includes('RESEARCH:') && !state.researchDone) {
+            const researchMatch = reply.match(/RESEARCH:\s*(.+)/);
+            if (researchMatch) {
+                const query = researchMatch[1].trim();
+                console.log(`[RESEARCH] AI requested lookup: "${query}"`);
+
+                // Show a brief bubble note while fetching
+                const introElR = document.getElementById('question-intro');
+                document.getElementById('question-thinking').style.display = 'flex';
+                if (introElR) introElR.style.display = 'none';
+
+                const result = await getWikiResearchSummary(query);
+                state.researchDone = true; // only one research lookup per session
+
+                if (result) {
+                    state.messages.push({
+                        role: 'user',
+                        content: `RESEARCH RESULTS for "${result.title}":\n${result.text}\n\nNow use this information to continue narrowing down the answer. Resume with your next question.`
+                    });
+                    console.log(`[RESEARCH] Injected article: "${result.title}"`);
+                } else {
+                    state.messages.push({
+                        role: 'user',
+                        content: `Research unavailable for that query. Please continue with what you know.`
+                    });
+                }
+                askNextQuestion();
+                return;
+            }
+        }
+
         // Parse question text (with personality intro) and options
         const parsed = parseQuestion(reply);
 
@@ -574,7 +610,9 @@ async function askNextQuestion() {
 
         // Update gradient progress bar
         const bar = document.getElementById('question-progress-bar');
-        if (bar) bar.style.width = Math.min((questionNum / 21) * 100, 100) + '%';
+        // Progress bar fills over ~21 questions but keeps pulsing after that
+        const barPct = Math.min((questionNum / 21) * 100, 95);
+        if (bar) bar.style.width = barPct + '%';
 
         // Show personality intro in speech bubble (fallback to rotating QUESTION_INTROS)
         const introBank = QUESTION_INTROS[state.mascot] || QUESTION_INTROS.panda;
@@ -595,6 +633,9 @@ async function askNextQuestion() {
             void mainEl.offsetWidth; // trigger reflow for animation restart
             mainEl.classList.add('question-enter');
         }
+
+        // Log question to session logger
+        if (window.FIPLogger) FIPLogger.logQuestion(questionNum, parsed.question, introText);
 
         renderAnswerButtons(parsed.options);
         const answersEl = document.getElementById('dynamic-answers');
@@ -624,7 +665,48 @@ function answerQuestion(answer, questionContext) {
         fullAnswer = hint ? `${answer}. Extra detail: ${hint}` : answer;
     }
 
+    if (window.FIPLogger) FIPLogger.logAnswer(answer, hint);
     state.messages.push({ role: 'user', content: fullAnswer });
+
+    // Mid-session memory jog pause after the 10th question is answered
+    if (questionNum === 10) {
+        showMemoryJog();
+        return;
+    }
+
+    askNextQuestion();
+}
+
+function showMemoryJog() {
+    const card = document.getElementById('memory-jog');
+    if (!card) { askNextQuestion(); return; }
+    // Hide active question UI
+    document.getElementById('question-main').style.display = 'none';
+    document.getElementById('dynamic-answers').style.display = 'none';
+    document.getElementById('hint-addon').style.display = 'none';
+    document.getElementById('question-thinking').style.display = 'none';
+    const introEl = document.getElementById('question-intro');
+    if (introEl) introEl.style.display = 'none';
+    // Show jog card with entrance animation
+    card.style.display = 'block';
+    card.classList.remove('question-enter');
+    void card.offsetWidth;
+    card.classList.add('question-enter');
+    const jogInput = document.getElementById('memory-jog-input');
+    if (jogInput) { jogInput.value = ''; jogInput.focus(); }
+}
+
+function submitMemoryJog() {
+    const input = document.getElementById('memory-jog-input');
+    const text = input ? input.value.trim() : '';
+    const card = document.getElementById('memory-jog');
+    if (card) card.style.display = 'none';
+    if (text) {
+        state.messages.push({ role: 'user', content: `New detail that just came to mind: "${text}"` });
+        if (window.FIPLogger) FIPLogger.logAnswer('[memory-jog]', text);
+    }
+    // Restore thinking state before next question
+    document.getElementById('question-thinking').style.display = 'flex';
     askNextQuestion();
 }
 
@@ -775,10 +857,24 @@ function tmdbQueryVariants(item) {
     return [...new Set(variants)]; // deduplicate
 }
 
-// Core TMDB search - tries each query variant until a poster is found
+// Score how well a TMDB result title matches our search term (0-1)
+function tmdbTitleScore(result, targetClean) {
+    const t = (result.title || result.name || result.original_title || result.original_name || '').toLowerCase().trim();
+    const target = targetClean.toLowerCase().trim();
+    if (t === target) return 1.0;
+    if (t.startsWith(target) || target.startsWith(t)) return 0.85;
+    // Count shared words
+    const tWords = new Set(t.split(/\s+/));
+    const targetWords = target.split(/\s+/);
+    const shared = targetWords.filter(w => tWords.has(w)).length;
+    return shared / Math.max(targetWords.length, tWords.size);
+}
+
+// Core TMDB search - picks best title match rather than just first result
 async function tmdbSearch(endpoint, item) {
     const variants = tmdbQueryVariants(item);
-    console.log(`[IMG] TMDB ${endpoint} search variants:`, variants);
+    const targetClean = cleanItemName(item);
+    console.log(`[IMG] TMDB ${endpoint} search variants:`, variants, '| target:', targetClean);
     for (const query of variants) {
         try {
             const url = `https://api.themoviedb.org/3/search/${endpoint}?query=${encodeURIComponent(query)}&page=1&include_adult=false`;
@@ -794,11 +890,19 @@ async function tmdbSearch(endpoint, item) {
             if (!res.ok) { console.log(`[IMG] TMDB not ok, skipping`); continue; }
             const data = await res.json();
             const results = data?.results;
-            console.log(`[IMG] TMDB results count:`, results?.length, results?.[0]);
+            console.log(`[IMG] TMDB results count:`, results?.length);
             if (!results?.length) continue;
-            const withImg = results.find(r => r.poster_path || r.profile_path);
-            if (!withImg) { console.log(`[IMG] No poster found in results`); continue; }
-            const path = withImg.poster_path || withImg.profile_path;
+
+            // Score all results with a poster by title similarity, pick best match
+            const withImg = results.filter(r => r.poster_path || r.profile_path);
+            if (!withImg.length) { console.log(`[IMG] No poster found in results`); continue; }
+
+            const scored = withImg.map(r => ({ r, score: tmdbTitleScore(r, targetClean) }));
+            scored.sort((a, b) => b.score - a.score);
+            const best = scored[0];
+            console.log(`[IMG] TMDB best match: "${best.r.title || best.r.name}" score=${best.score.toFixed(2)}`);
+
+            const path = best.r.poster_path || best.r.profile_path;
             const imgUrl = `${TMDB_IMG_BASE}${path}`;
             console.log(`[IMG] TMDB success:`, imgUrl);
             return imgUrl;
@@ -823,6 +927,47 @@ async function fetchTMDBTV(item) {
 // ---- TMDB: People (celebrities, sports stars, actors) ----
 async function fetchTMDBPerson(item) {
     return tmdbSearch('person', item);
+}
+
+// ---- Wikipedia: research summary for mid-game context injection ----
+// Returns a plain-text summary of the most relevant Wikipedia article for a query.
+// Used by the RESEARCH tool so the AI can look up squads, casts, rosters, etc.
+async function getWikiResearchSummary(query) {
+    try {
+        console.log(`[RESEARCH] Searching Wikipedia for: "${query}"`);
+        // Step 1: find the best article title
+        const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=3&format=json&origin=*`;
+        const searchRes = await fetch(searchUrl);
+        if (!searchRes.ok) return null;
+        const searchData = await searchRes.json();
+        const hits = searchData?.query?.search;
+        if (!hits?.length) return null;
+
+        // Pick the hit whose title most closely matches the query
+        const target = query.toLowerCase();
+        const best = hits.reduce((a, b) =>
+            b.title.toLowerCase().includes(target) && !a.title.toLowerCase().includes(target) ? b : a
+        , hits[0]);
+
+        // Step 2: get the article extract (first ~2000 chars of article text)
+        const extractUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(best.title)}&prop=extracts&exintro=true&explaintext=true&exsectionformat=plain&format=json&origin=*`;
+        const extractRes = await fetch(extractUrl);
+        if (!extractRes.ok) return null;
+        const extractData = await extractRes.json();
+        const pages = extractData?.query?.pages;
+        if (!pages) return null;
+        const page = Object.values(pages)[0];
+        const extract = page?.extract;
+        if (!extract) return null;
+
+        // Trim to ~2000 chars so it fits in context without inflating token cost
+        const trimmed = extract.length > 2000 ? extract.slice(0, 2000) + '…' : extract;
+        console.log(`[RESEARCH] Got article "${best.title}" (${trimmed.length} chars)`);
+        return { title: best.title, text: trimmed };
+    } catch (e) {
+        console.log(`[RESEARCH] Error:`, e.message);
+        return null;
+    }
 }
 
 // ---- Wikipedia: search then thumbnail ----
@@ -1014,14 +1159,23 @@ async function loadResultImage(imgWrapId, item) {
     const cleanItem = cleanItemName(item);
     const imgSrc = await fetchWikiImage(cleanItem);
     if (imgSrc) {
+        // Detect source from URL for logging
+        const src = imgSrc.includes('themoviedb') ? 'tmdb'
+                  : imgSrc.includes('itunes') || imgSrc.includes('mzstatic') ? 'itunes'
+                  : 'wiki';
+        if (window.FIPLogger) FIPLogger.logImageLoad(cleanItem, src, imgSrc, true);
         const img = document.createElement('img');
         img.className = 'result-img';
         img.alt = item;
         img.src = imgSrc;
-        img.onerror = () => { wrap.innerHTML = `<span class="result-img-placeholder">${fallback}</span>`; };
+        img.onerror = () => {
+            if (window.FIPLogger) FIPLogger.logImageLoad(cleanItem, src, imgSrc, false);
+            wrap.innerHTML = `<span class="result-img-placeholder">${fallback}</span>`;
+        };
         wrap.innerHTML = '';
         wrap.appendChild(img);
     } else {
+        if (window.FIPLogger) FIPLogger.logImageLoad(cleanItem, 'fallback', null, false);
         wrap.innerHTML = `<span class="result-img-placeholder">${fallback}</span>`;
     }
 }
@@ -1041,13 +1195,16 @@ function handleGuess(reply) {
         return;
     }
 
+    // Log the guess
+    if (window.FIPLogger) FIPLogger.logGuess(items.slice(0, 3), null, null);
+
     // Clean each item name before display and image lookup
     carouselItems = items.slice(0, 3).map(cleanItemName);
     currentCarouselIndex = 0;
 
     const mascotMsg = lines.filter(l => !l.includes('GUESS:')).join(' ').trim();
     updateAllMascots();
-    document.getElementById('results-bubble').textContent = mascotMsg || `I think I figured it out! Is it one of these?`;
+    document.getElementById('results-bubble').textContent = mascotMsg || `Do any of these ring a bell?`;
 
     const track = document.getElementById('results-carousel-track');
     const dotsWrap = document.getElementById('results-dots');
@@ -1144,6 +1301,14 @@ function saveResult(item, btnIndex) {
 
 function closeSaveOverlay(wasCorrect) {
     document.getElementById('save-success-overlay').classList.remove('active');
+    // Update logger with correctness result
+    if (window.FIPLogger) {
+        const current = FIPLogger.getFullLogs().slice(-1)[0];
+        if (current?.outcome) {
+            current.outcome.wasCorrect = !!wasCorrect;
+            console.log(`[LOG] Outcome updated — wasCorrect: ${wasCorrect}`);
+        }
+    }
     if (wasCorrect) {
         launchConfetti();
         // Show found overlay
@@ -1273,7 +1438,15 @@ function initCarouselDrag() {
 }
 
 function noneOfThese() {
-    state.messages.push({ role: 'user', content: 'None of those were right. Please keep asking more questions to narrow it down further.' });
+    // Find what was guessed and tell the AI explicitly so it never repeats those names
+    const lastAssistantMsg = [...state.messages].reverse().find(m => m.role === 'assistant' && m.content.includes('GUESS:'));
+    let wrongGuesses = '';
+    if (lastAssistantMsg) {
+        const guessLine = lastAssistantMsg.content.match(/GUESS:\s*(.+)/);
+        if (guessLine) wrongGuesses = ` The following guesses were WRONG and must NOT be guessed again: ${guessLine[1].trim()}.`;
+    }
+    state.researchDone = false; // allow one more research lookup after wrong guesses
+    state.messages.push({ role: 'user', content: `None of those guesses were correct.${wrongGuesses} Please keep asking more focused yes/no questions to narrow it down further. Think carefully about what you know so far and approach from a different angle.` });
     showPage('question-page');
     document.getElementById('question-thinking').style.display = 'flex';
     const introEl2 = document.getElementById('question-intro');
@@ -1292,6 +1465,7 @@ function showError(msg) {
 }
 
 function startOver() {
+    if (window.FIPLogger) FIPLogger.logStartOver();
     state.messages = [];
     state.initialMemory = '';
     state.selectedCategory = '';
@@ -1313,19 +1487,51 @@ function showInfoPage(id) {
 // ============================================================
 function buildSystemPrompt() {
     const styleGuide = {
-        1: 'Use full sentences with context. Example: "Was this animal last seen in the wild primarily in Africa?"',
-        2: 'Use clear but concise questions. Example: "Does it mainly live in Africa?"',
-        3: 'Use simple, friendly questions. Example: "Is it from Africa?"',
-        4: 'Use very short questions. Example: "Africa?"',
-        5: 'Use 1 to 3 words only. Example: "Africa?" or "Big animal?"'
+        1: `BROAD SENSORY & EMOTIONAL — ask things answerable from a vague impression, not factual knowledge.
+Focus on feelings, senses, and associations that might trigger memory recall.
+Examples: "Does it make you feel nostalgic?", "Is it associated with warmth or comfort?",
+"Does it make a sound?", "Is it something colourful?", "Does it feel like something from childhood?",
+"Is it something that makes you smile?", "Does it feel like a summer thing?"
+NEVER ask about specific names, dates, numbers, or technical details at this level.`,
+
+        2: `BROAD CATEGORICAL — ask yes/no questions answerable without precise knowledge.
+Focus on general nature and context rather than specifics.
+Examples: "Is it something you can hold?", "Was it popular when you were growing up?",
+"Is it something you'd encounter indoors?", "Does it involve other people?",
+"Is it something you'd pay money for?", "Can you experience it alone?"`,
+
+        3: `CLEAR FACTUAL — ask standard yes/no questions about category, time period, geography, and domain.
+Examples: "Is it from Asia?", "Was it made after 2000?", "Is it a real person?",
+"Is it something you'd watch?", "Is it still around today?", "Is it from a specific country?"
+Standard level — works well when the user remembers moderate detail.`,
+
+        4: `DOMAIN-SPECIFIC — ask more precise questions including sub-categories, rough numbers, and name characteristics.
+Examples: "Was it released specifically in the 2010s?", "Does the name have more than two syllables?",
+"Was it a lower-order batsman?", "Does the title start with a vowel?", "Was it a sequel?",
+"Is it from the same country as another famous example you mentioned?", "Was it award-winning?"`,
+
+        5: `EXPERT TECHNICAL — ask precise, expert-level questions drilling into exact specifics.
+Examples: "Did they bat in positions 6 to 8?", "Is the first letter in the second half of the alphabet (N to Z)?",
+"Was it a Test-only player?", "Did the title have exactly one word?",
+"Was it a franchise with more than three films?", "Did the name end in a vowel sound?",
+"Is the surname fewer than six letters long?", "Was it released before the mid-point of the decade?"`
     };
 
     const personality = MASCOTS[state.mascot]?.personality || '';
 
-    return `You are ${state.mascotName} the ${MASCOTS[state.mascot]?.species || 'companion'}, a memory assistant helping ${state.name} identify something they cannot fully remember.
+    return `You are ${state.mascotName} the ${MASCOTS[state.mascot]?.species || 'companion'}, a memory recovery companion helping ${state.name}.
+
+CORE PURPOSE — READ THIS CAREFULLY:
+${state.name} has forgotten something. They do NOT know what it is anymore — they only remember vague characteristics or fragments. Your job is to ask questions that help them *reconstruct* the memory and surface what they're thinking of. This is NOT a guessing game where they know the answer and you have to guess it. They may be just as unsure as you are.
+
+Critical mindset:
+- "Not sure" means they genuinely don't remember — not that they're being evasive. Treat it as a signal to approach from a completely different angle.
+- Ask questions that might trigger recall: sensory, emotional, contextual, association-based, physical, or time-period.
+- When you present guesses, frame them as possibilities that might "ring a bell" — not a triumphant reveal.
+- Be warm and collaborative, like a friend helping you think. Not competitive.
 
 PERSONALITY: ${personality}
-Express your personality briefly - one short phrase per response maximum. Never let personality slow the questioning.
+Express your personality briefly — one short phrase per response maximum. Never let personality slow the questioning.
 
 CRITICAL RULE - QUESTION FORMAT:
 - Ask ONLY pure yes/no questions. Every question must be answerable with Yes, No, or Not sure.
@@ -1335,7 +1541,7 @@ CRITICAL RULE - QUESTION FORMAT:
 - If you want to distinguish between two things, ask about one of them with a plain yes/no. Never combine them with "or".
 - One question per response only. No lists. No explanations.
 
-QUESTION STYLE: ${styleGuide[state.simplicity]}
+QUESTION DEPTH LEVEL: ${styleGuide[state.simplicity]}
 
 GLOBAL INCLUSIVITY - EXTREMELY IMPORTANT:
 You must think globally and inclusively from the very start. The user may be thinking of something from ANY country, culture, religion, or language. Do NOT default to Western/English content.
@@ -1349,7 +1555,7 @@ You must think globally and inclusively from the very start. The user may be thi
 
 ALWAYS ask about cultural/geographic origin EARLY in questioning (within first 4 questions) to avoid going down the wrong path for 20 questions.
 
-SMART NARROWING STRATEGY (binary decision tree, max 21 questions):
+SMART NARROWING STRATEGY (binary decision tree):
 Questions 1-4: Establish fundamentals fast
   - Real vs fictional
   - Person/place/thing/concept
@@ -1362,18 +1568,52 @@ Questions 5-10: Medium specificity
   - Famous internationally or mainly regionally?
   - If category is Movies or TV Shows: ask which streaming platform early. Ask "Was it on Netflix?", then "Stan?", "Disney+?", "Prime Video?", "Hulu?", "Apple TV+?", "Paramount+?", "Peacock?", "HBO Max?", "Hotstar?" one at a time. This is a very strong signal - do not skip it.
 
-Questions 11-18: Narrow down specifics
+Questions 11-20: Narrow down specifics
   - Physical traits, titles, associated words
   - Specific country/state/city
+  - Approach from fresh angles if previous questions haven't narrowed enough
 
-Questions 19-21: Final narrowing before forced guess
+Questions 20+: Keep going until confident — accuracy matters more than speed
+  - If still uncertain, try completely different angles
+  - Ask about specific attributes: title length, starting letter, famous co-stars, release decade, theme
+
+NAME / IDENTITY STRATEGY — CRITICAL:
+When you have identified the specific GROUP (team, squad, cast, band, country's players) but not the exact individual:
+1. USE THE RESEARCH TOOL (see below) to look up the actual member list. Do not guess blindly.
+2. Ask about specific name characteristics: "Does the first name start with a letter in the first half of the alphabet (A–M)?"
+3. Ask about physical traits, role in the team, batting position, jersey number, etc.
+4. If you guessed a name that was WRONG but CLOSE, ask "Is the first name longer than [X] letters?" or "Does the surname have more than one syllable?" to zero in.
+5. NEVER guess a made-up or uncertain name. Only guess names you are confident actually exist and match the criteria.
+
+RESEARCH TOOL — USE THIS WHEN NARROWED TO A SPECIFIC GROUP:
+When you know the answer is a specific team member, cast member, squad player, album track, etc. but you don't know the exact name, you MUST use the research tool:
+Output EXACTLY on its own line:
+RESEARCH: <specific search query>
+Then stop. Do NOT ask a question in the same response.
+Examples:
+  RESEARCH: 1983 Cricket World Cup West Indies squad
+  RESEARCH: original cast Fawlty Towers
+  RESEARCH: 1966 England World Cup squad players
+  RESEARCH: BTS members names
+  RESEARCH: Tamil Nadu 2011 Ranji Trophy cricket team squad
+The research results will be provided to you and you can then make a confident, accurate guess.
+Only use RESEARCH once. Use it wisely — be specific in your query.
+
+HANDLING "NOT SURE" ANSWERS:
+When the user answers "not sure", they genuinely don't remember — not being evasive.
+- NEVER repeat a similar question.
+- Try a completely different angle: sensory impression, emotional association, time period, physical characteristic.
+- Ask something that might jog the memory from a new direction.
+- Treat "not sure" as useful information that rules out nothing but signals a new approach is needed.
 
 GUESSING:
-- After 6+ questions, if reasonably confident: make your guess.
-- At question 18+: make your best guess regardless of confidence.
-- HARD LIMIT: At question 21, you MUST guess. No more questions.
+- Only guess when genuinely confident — wrong guesses can confuse someone already struggling to remember.
+- After 8+ questions, if reasonably confident (>70%): present your guesses.
+- Keep asking if still unsure — finding the right answer matters more than speed.
+- NEVER guess a name you are not sure actually exists. Use the RESEARCH tool first if uncertain.
+- Frame guesses as possibilities that might "ring a bell", not certainties.
 - Format EXACTLY:
-[One short encouraging sentence]
+[One warm, collaborative sentence — e.g. "Based on everything you've shared, here are my best guesses!"]
 GUESS: [first guess], [second guess], [third guess]
 
 CRITICAL NAME FORMAT - THE MOST IMPORTANT RULE:
@@ -1393,7 +1633,7 @@ When you are highly confident about your first guess, slots 2 and 3 must be genu
 - Food: Use dishes from the same cuisine or style. If first guess is "Pad Thai", use "Pad See Ew" and "Khao Pad".
 - Books: Use books by the same author or same genre. If first guess is "Harry Potter", use "The Hobbit" and "Percy Jackson".
 
-If user says "not sure", accept it and approach from a completely different angle. Never repeat a similar question.`;
+Remember: you are helping someone recover a lost memory together. Be patient, warm, and creative with your angles.`;
 }
 
 // ============================================================
@@ -1471,6 +1711,7 @@ window.closeSaveOverlay  = closeSaveOverlay;
 window.goHome            = goHome;
 window.goToResultSlide   = goToResultSlide;
 window.submitHint        = submitHint;
+window.submitMemoryJog   = submitMemoryJog;
 window.selectMascot      = selectMascot;
 window.selectCompanion   = selectCompanion;
 window.selectToggle      = selectToggle;

@@ -1795,3 +1795,38 @@
 
         /* --- Hint addon show animation --- */
         #hint-addon { animation: slide-up 0.25s ease both; }
+
+        /* === MEMORY JOG CARD === */
+        .memory-jog-card {
+            width: 100%;
+            background: var(--surface);
+            border: 2px solid var(--secondary);
+            border-radius: var(--radius);
+            padding: 24px 22px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        .memory-jog-icon { font-size: 2.2rem; margin-bottom: 10px; }
+        .memory-jog-heading {
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.2rem; font-weight: 800;
+            color: var(--text); margin-bottom: 8px;
+        }
+        .memory-jog-body {
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.95rem; color: var(--text2);
+            line-height: 1.5; margin-bottom: 16px;
+        }
+        .memory-jog-textarea {
+            width: 100%; min-height: 72px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px; box-sizing: border-box;
+            font-family: 'Nunito', sans-serif; font-size: 0.95rem;
+            color: var(--text); background: var(--bg);
+            resize: none; outline: none;
+            transition: border-color var(--transition);
+            margin-bottom: 14px;
+        }
+        .memory-jog-textarea:focus { border-color: var(--primary); }
+        .memory-jog-actions { display: flex; justify-content: center; }
