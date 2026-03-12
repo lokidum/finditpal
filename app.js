@@ -929,6 +929,53 @@ async function fetchTMDBPerson(item) {
     return tmdbSearch('person', item);
 }
 
+// ---- TVMaze: fictional characters from TV shows ----
+// Free, no auth, CORS-friendly. Returns character portraits.
+async function fetchTVMazeCharacter(name) {
+    try {
+        const url = `https://api.tvmaze.com/search/characters?q=${encodeURIComponent(name)}`;
+        console.log(`[IMG] TVMaze character search:`, name);
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data?.length) return null;
+        // Pick best match: exact or closest name, must have an image
+        const withImg = data.filter(r => r.character?.image?.original || r.character?.image?.medium);
+        if (!withImg.length) return null;
+        const target = name.toLowerCase();
+        const best = withImg.find(r => (r.character?.name || '').toLowerCase() === target) || withImg[0];
+        const img = best.character?.image?.original || best.character?.image?.medium;
+        console.log(`[IMG] TVMaze found: "${best.character?.name}" →`, img);
+        return img || null;
+    } catch (e) {
+        console.log(`[IMG] TVMaze error:`, e.message);
+        return null;
+    }
+}
+
+// ---- AniList: anime / manga characters ----
+// Free GraphQL API, CORS-friendly.
+async function fetchAniListCharacter(name) {
+    try {
+        console.log(`[IMG] AniList character search:`, name);
+        const query = `query($name:String){Character(search:$name){image{large}name{full}}}`;
+        const res = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ query, variables: { name } })
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const img = data?.data?.Character?.image?.large;
+        const fullName = data?.data?.Character?.name?.full;
+        if (img) console.log(`[IMG] AniList found: "${fullName}" →`, img);
+        return img || null;
+    } catch (e) {
+        console.log(`[IMG] AniList error:`, e.message);
+        return null;
+    }
+}
+
 // ---- Wikipedia: research summary for mid-game context injection ----
 // Returns a plain-text summary of the most relevant Wikipedia article for a query.
 // Used by the RESEARCH tool so the AI can look up squads, casts, rosters, etc.
@@ -970,16 +1017,24 @@ async function getWikiResearchSummary(query) {
     }
 }
 
+// Titles to skip — list/aggregate pages never have useful single-item images
+const BAD_WIKI_TITLE = /^(list of|characters of|cast of|episodes of|index of|glossary of|outline of)/i;
+
 // ---- Wikipedia: search then thumbnail ----
-async function searchWikiTitle(query) {
+// skipLists=true fetches more candidates and filters aggregate pages
+async function searchWikiTitle(query, skipLists = false) {
     try {
-        const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=1&format=json&origin=*`;
+        const limit = skipLists ? 5 : 2;
+        const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=${limit}&format=json&origin=*`;
         console.log(`[IMG] Wiki search:`, query);
         const res = await fetch(url);
         if (!res.ok) return null;
         const data = await res.json();
         const results = data?.query?.search;
-        const title = results?.length ? results[0].title : null;
+        if (!results?.length) return null;
+        // Always skip list/aggregate articles — they return show promos not item images
+        const good = results.find(r => !BAD_WIKI_TITLE.test(r.title));
+        const title = (good || results[0]).title;
         console.log(`[IMG] Wiki title found:`, title);
         return title;
     } catch (e) {
@@ -1000,10 +1055,12 @@ async function getWikiThumbnail(title) {
             const cover = items.find(item => {
                 if (item.type !== 'image') return false;
                 const src = (item.srcset?.[0]?.src || item.original?.source || '').toLowerCase();
-                const title = (item.titles?.canonical || '').toLowerCase();
-                // Skip flags, icons, logos, wikimedia commons generic images
-                if (title.includes('flag') || title.includes('icon') || title.includes('logo')) return false;
-                if (src.includes('flag') || src.includes('icon')) return false;
+                const canonicalTitle = (item.titles?.canonical || '').toLowerCase();
+                // Skip flags, icons, logos, SVGs (usually diagrams/badges), edit buttons
+                if (canonicalTitle.includes('flag') || canonicalTitle.includes('icon') || canonicalTitle.includes('logo')) return false;
+                if (src.includes('flag') || src.includes('icon') || src.includes('.svg')) return false;
+                // Skip Wikimedia Commons generic/placeholder images
+                if (src.includes('question_book') || src.includes('ambox') || src.includes('edit-clear')) return false;
                 return true;
             });
             if (cover) {
@@ -1093,7 +1150,7 @@ async function fetchWikiImage(item) {
                 `${cleanItem} actress`,
                 `${cleanItem} (actor)`,
                 cleanItem
-            ]));
+            ], true));
     }
 
     if (cat === 'Sports') {
@@ -1105,7 +1162,7 @@ async function fetchWikiImage(item) {
                 `${cleanItem} (cricketer)`,
                 `${cleanItem} (footballer)`,
                 cleanItem
-            ]));
+            ], true));
     }
 
     // Music - iTunes first, then Wikipedia targeting song/album pages only (never artist pages)
@@ -1120,29 +1177,48 @@ async function fetchWikiImage(item) {
             ]));
     }
 
+    // Fictional Characters — TVMaze (TV), AniList (anime), then Wikipedia disambiguation
+    if (cat === 'Fictional Characters') {
+        return (await fetchTVMazeCharacter(cleanItem))
+            || (await fetchAniListCharacter(cleanItem))
+            || (await fetchWikiImage_inner(cleanItem, [
+                `${cleanItem} (character)`,
+                `${cleanItem} (comics)`,
+                `${cleanItem} (DC Comics)`,
+                `${cleanItem} (Marvel Comics)`,
+                `${cleanItem} (anime)`,
+                `${cleanItem} (manga)`,
+                `${cleanItem} (film character)`,
+                `${cleanItem} (fictional character)`,
+                cleanItem,
+            ], true)); // skipLists=true — never use "List of..." for a character image
+    }
+
     const wikiQueries = {
-        'Video Games':         [`${cleanItem} video game`, `${cleanItem} game`, cleanItem],
-        'Books':               [`${cleanItem} novel`, `${cleanItem} book`, cleanItem],
-        'Food':                [`${cleanItem} dish`, `${cleanItem} food`, `${cleanItem} cuisine`, cleanItem],
-        'Animals':             [`${cleanItem} animal`, `${cleanItem} species`, cleanItem],
-        'Countries':           [cleanItem],
-        'Cities':              [`${cleanItem} city`, cleanItem],
-        'Brands':              [`${cleanItem} company`, `${cleanItem} brand`, cleanItem],
-        'Apps & Websites':     [`${cleanItem} app`, `${cleanItem} website`, cleanItem],
-        'Fictional Characters':[`${cleanItem} character`, `${cleanItem} fictional character`, cleanItem],
-        'Colours':             [cleanItem],
-        'Something Else':      [cleanItem],
-        'General':             [cleanItem],
+        'Video Games':     [`${cleanItem} video game`, `${cleanItem} game`, cleanItem],
+        'Books':           [`${cleanItem} novel`, `${cleanItem} book`, cleanItem],
+        'Food':            [`${cleanItem} dish`, `${cleanItem} food`, `${cleanItem} cuisine`, cleanItem],
+        'Animals':         [`${cleanItem} animal`, `${cleanItem} species`, cleanItem],
+        'Countries':       [cleanItem],
+        'Cities':          [`${cleanItem} city`, cleanItem],
+        'Brands':          [`${cleanItem} company`, `${cleanItem} brand`, cleanItem],
+        'Apps & Websites': [`${cleanItem} app`, `${cleanItem} website`, cleanItem],
+        'Colours':         [cleanItem],
+        'Something Else':  [cleanItem],
+        'General':         [cleanItem],
     };
 
     return fetchWikiImage_inner(cleanItem, wikiQueries[cat] || [cleanItem]);
 }
 
 // Internal wiki fetch used by waterfall
-async function fetchWikiImage_inner(item, queries) {
+// skipLists: pass true when searching for individual items (characters, people, etc.)
+async function fetchWikiImage_inner(item, queries, skipLists = false) {
     for (const query of queries) {
-        const title = await searchWikiTitle(query);
+        const title = await searchWikiTitle(query, skipLists);
         if (!title) continue;
+        // Extra safety: never use a list/aggregate article even if skipLists=false
+        if (BAD_WIKI_TITLE.test(title)) { console.log(`[IMG] Skipping list article: "${title}"`); continue; }
         const img = await getWikiThumbnail(title);
         if (img) return img;
     }
@@ -1162,6 +1238,8 @@ async function loadResultImage(imgWrapId, item) {
         // Detect source from URL for logging
         const src = imgSrc.includes('themoviedb') ? 'tmdb'
                   : imgSrc.includes('itunes') || imgSrc.includes('mzstatic') ? 'itunes'
+                  : imgSrc.includes('tvmaze') ? 'tvmaze'
+                  : imgSrc.includes('anilist') || imgSrc.includes('s4.anilist') ? 'anilist'
                   : 'wiki';
         if (window.FIPLogger) FIPLogger.logImageLoad(cleanItem, src, imgSrc, true);
         const img = document.createElement('img');
