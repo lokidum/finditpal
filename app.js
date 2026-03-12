@@ -348,6 +348,7 @@ function showLanding() {
     updateAllMascots();
     document.getElementById('day-buttons').style.display = 'flex';
     document.getElementById('help-input-section').style.display = 'none';
+    document.getElementById('landing-page').classList.remove('landing-expanded');
     const greetFn = LANDING_GREETINGS[state.mascot] || ((n) => `Hi ${n}! I'm ${state.mascotName}. How has your day been? 😊`);
     document.getElementById('landing-bubble').textContent = greetFn(state.name);
     showPage('landing-page');
@@ -401,6 +402,7 @@ function respondDay(mood) {
             bad:   `I'm sorry to hear that 💙 How can I help you today, ${state.name}?` }[mood];
     document.getElementById('landing-bubble').textContent = msg;
     document.getElementById('help-input-section').style.display = 'block';
+    document.getElementById('landing-page').classList.add('landing-expanded');
     renderCarousel();
 }
 
@@ -1818,44 +1820,55 @@ window.clearHistory      = clearHistory;
 // UI ENHANCEMENTS — GlowingEffect, Mascot Circles, Footer
 // ============================================================
 
-// 1. GlowingEffect: track mouse over category cards and set --start / --active CSS vars
+// 1. GlowingEffect: global pointermove listener with smooth angle lerp (mirrors 21st.dev GlowingEffect)
 (function initGlowingEffect() {
-    function attachGlowTracking(pageId) {
-        const page = document.getElementById(pageId);
-        if (!page) return;
-        page.addEventListener('pointermove', (e) => {
-            const cards = page.querySelectorAll('.category-btn');
-            cards.forEach(card => {
-                const rect = card.getBoundingClientRect();
-                const cx = rect.left + rect.width / 2;
-                const cy = rect.top + rect.height / 2;
-                const angle = Math.atan2(e.clientY - cy, e.clientX - cx) * (180 / Math.PI);
-                card.style.setProperty('--start', String(angle + 90));
-                const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
-                const proximity = Math.max(rect.width, rect.height) * 0.75;
-                card.style.setProperty('--active', dist < proximity ? '1' : '0');
-            });
-        });
-        page.addEventListener('pointerleave', () => {
-            page.querySelectorAll('.category-btn').forEach(card => {
-                card.style.setProperty('--active', '0');
-            });
+    // Smooth angle lerp to avoid jumps when crossing ±180°
+    function lerpAngle(current, target, t) {
+        let diff = ((target - current + 180) % 360) - 180;
+        return current + diff * t;
+    }
+
+    const cardAngles = new WeakMap(); // per-card current angle
+
+    let rafId = null;
+    let lastX = 0, lastY = 0;
+
+    function updateCards(x, y) {
+        document.querySelectorAll('.category-btn').forEach(card => {
+            const rect = card.getBoundingClientRect();
+            // check if card is visible
+            if (rect.width === 0) return;
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const targetAngle = Math.atan2(y - cy, x - cx) * (180 / Math.PI) + 90;
+            const current = cardAngles.get(card) || 0;
+            const next = lerpAngle(current, targetAngle, 0.12);
+            cardAngles.set(card, next);
+            card.style.setProperty('--start', String(next));
+            const dist = Math.hypot(x - cx, y - cy);
+            const threshold = Math.max(rect.width, rect.height) * 0.8;
+            card.style.setProperty('--active', dist < threshold ? '1' : '0');
         });
     }
-    // Attach after DOM is ready; re-attach when pages become visible
-    document.addEventListener('DOMContentLoaded', () => {
-        attachGlowTracking('category-page');
-        attachGlowTracking('landing-page');
-    });
-    // Also hook into MutationObserver for dynamically-added cards
-    const glowObserver = new MutationObserver(() => {
-        attachGlowTracking('category-page');
-        attachGlowTracking('landing-page');
-    });
-    const catPage = document.getElementById('category-page');
-    const landPage = document.getElementById('landing-page');
-    if (catPage) glowObserver.observe(catPage, { childList: true, subtree: true });
-    if (landPage) glowObserver.observe(landPage, { childList: true, subtree: true });
+
+    function tick() {
+        updateCards(lastX, lastY);
+        rafId = requestAnimationFrame(tick);
+    }
+
+    document.body.addEventListener('pointermove', (e) => {
+        lastX = e.clientX;
+        lastY = e.clientY;
+        if (!rafId) rafId = requestAnimationFrame(tick);
+    }, { passive: true });
+
+    // Stop RAF when pointer leaves window (performance)
+    document.body.addEventListener('pointerleave', () => {
+        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        document.querySelectorAll('.category-btn').forEach(card => {
+            card.style.setProperty('--active', '0');
+        });
+    }, { passive: true });
 })();
 
 // 2. Mascot circle color switching — sets CSS vars per mascot palette
@@ -1878,24 +1891,119 @@ function setMascotCircleVariant(mascot) {
     root.style.setProperty('--circle-gradient', p.gradient);
 }
 
-// 3. Footer IntersectionObserver — animate columns when footer enters viewport
-(function initFooterObserver() {
-    function observe() {
-        const cols = document.querySelectorAll('.footer-col');
-        if (!cols.length) return;
-        const io = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('footer-animated');
-                    io.unobserve(entry.target);
+// 3. Sparkle canvas particle system — tsparticles-style burst on hover
+(function initSparkleButton() {
+    const COLORS = ['#a5b4fc','#94a3e8','#a8e6cf','#c4b5fd','#fcd5ce','#fde68a','#f9a8d4'];
+    const SHAPES = ['circle','star','square'];
+
+    function initCanvas(btn) {
+        const canvas = btn.querySelector('.sparkle-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let rafId = null;
+        let running = false;
+
+        function resize() {
+            const r = btn.getBoundingClientRect();
+            canvas.width = r.width + 48;
+            canvas.height = r.height + 48;
+        }
+
+        function spawnBurst() {
+            resize();
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            for (let i = 0; i < 22; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1.2 + Math.random() * 2.8;
+                particles.push({
+                    x: cx, y: cy,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 0.5,
+                    size: 1.5 + Math.random() * 3,
+                    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                    shape: SHAPES[Math.floor(Math.random() * SHAPES.length)],
+                    alpha: 1,
+                    life: 0,
+                    maxLife: 40 + Math.floor(Math.random() * 30),
+                    rotate: Math.random() * Math.PI * 2,
+                    rotSpeed: (Math.random() - 0.5) * 0.3,
+                });
+            }
+        }
+
+        function drawStar(ctx, x, y, r, rot) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rot);
+            ctx.beginPath();
+            for (let i = 0; i < 4; i++) {
+                const a = (i / 4) * Math.PI * 2;
+                const ia = a + Math.PI / 4;
+                ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+                ctx.lineTo(Math.cos(ia) * r * 0.4, Math.sin(ia) * r * 0.4);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles = particles.filter(p => p.life < p.maxLife);
+            if (!particles.length) {
+                running = false;
+                cancelAnimationFrame(rafId);
+                return;
+            }
+            for (const p of particles) {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.06; // gravity
+                p.rotate += p.rotSpeed;
+                p.life++;
+                p.alpha = 1 - (p.life / p.maxLife);
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                if (p.shape === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (p.shape === 'star') {
+                    drawStar(ctx, p.x, p.y, p.size * 1.5, p.rotate);
+                } else {
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rotate);
+                    ctx.fillRect(-p.size, -p.size, p.size * 2, p.size * 2);
+                    ctx.restore();
                 }
-            });
-        }, { threshold: 0.1 });
-        cols.forEach(col => io.observe(col));
+            }
+            ctx.globalAlpha = 1;
+            rafId = requestAnimationFrame(loop);
+        }
+
+        btn.addEventListener('mouseenter', () => {
+            spawnBurst();
+            if (!running) { running = true; rafId = requestAnimationFrame(loop); }
+        });
+        btn.addEventListener('mouseleave', () => {
+            // let particles finish naturally
+        });
+
+        resize();
+        window.addEventListener('resize', resize, { passive: true });
     }
+
+    function setup() {
+        const btn = document.getElementById('sparkle-btn-main');
+        if (btn) initCanvas(btn);
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', observe);
+        document.addEventListener('DOMContentLoaded', setup);
     } else {
-        observe();
+        setup();
     }
 })();

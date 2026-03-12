@@ -96,7 +96,16 @@ h1, h2, h3,
 /* PAGE SYSTEM */
 .page { display: none; min-height: 100vh; flex-direction: column; align-items: center; }
 .page.active { display: flex; }
-#landing-page { justify-content: space-between; }
+#landing-page {
+    justify-content: space-between;
+    height: 100dvh;
+    min-height: unset;
+    overflow-y: auto;
+}
+#landing-page.landing-expanded {
+    height: auto;
+    min-height: 100dvh;
+}
 
 /* ============================================================
    KEYFRAMES
@@ -501,6 +510,17 @@ h1, h2, h3,
 .sparkle-star:nth-child(2) { top: 50%;   right: 12px; animation-delay: 0.5s; transform-origin: center; }
 .sparkle-star:nth-child(3) { bottom: -6px; left: 50%;  animation-delay: 1s; }
 .sparkle-star:nth-child(4) { top: 12px;  right: 28px; animation-delay: 1.5s; }
+
+/* canvas layer for particle burst effect */
+.sparkle-canvas {
+    position: absolute;
+    inset: -24px;
+    pointer-events: none;
+    z-index: 3;
+    width: calc(100% + 48px);
+    height: calc(100% + 48px);
+    border-radius: inherit;
+}
 
 /* ---- DAY BUTTONS ---- */
 .day-btn {
@@ -1010,11 +1030,20 @@ input[type="range"]::-webkit-slider-thumb {
     position: relative;
     overflow: hidden;
     background: linear-gradient(160deg, var(--primary-light) 0%, var(--surface2) 60%, var(--bg) 100%);
-    padding: 40px 20px 36px;
+    padding: 40px 20px 48px;
     text-align: center;
     border-bottom-left-radius: 48px;
     border-bottom-right-radius: 48px;
     width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.landing-expanded .landing-top {
+    flex: 0 0 auto;
+    padding-bottom: 36px;
 }
 [data-theme="dark"] .landing-top {
     background: linear-gradient(160deg, rgba(30,32,69,0.9) 0%, rgba(37,42,58,0.9) 60%, var(--bg) 100%);
@@ -1138,7 +1167,7 @@ input[type="range"]::-webkit-slider-thumb {
 /* ============================================================
    CATEGORIES — glowing cards
    ============================================================ */
-.category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
 
 .category-btn {
     background: var(--surface);
@@ -1160,27 +1189,50 @@ input[type="range"]::-webkit-slider-thumb {
     --glow-color: rgba(148,163,232,0.9);
 }
 
-/* glow border via ::after driven by JS --start / --active */
+/* glow border — correct mask-composite:intersect approach from 21st.dev GlowingEffect */
 .category-btn::after {
     content: '';
     pointer-events: none;
     position: absolute;
-    inset: calc(-1 * 1px);
+    inset: -2px;
     border-radius: inherit;
-    border: 1px solid transparent;
+    border: 2px solid transparent;
     background:
+        radial-gradient(circle, #dd7bbb 10%, transparent 20%),
+        radial-gradient(circle at 40% 40%, #d79f1e 5%, transparent 15%),
+        radial-gradient(circle at 60% 60%, #94a3e8 10%, transparent 20%),
+        radial-gradient(circle at 40% 60%, #a8e6cf 10%, transparent 20%),
         conic-gradient(
-            from calc((var(--start) - 30) * 1deg),
+            from 236.84deg at 50% 50%,
+            #dd7bbb 0%,
+            #d79f1e calc(25% / 5),
+            #94a3e8 calc(50% / 5),
+            #a8e6cf calc(75% / 5),
+            #dd7bbb calc(100% / 5)
+        );
+    background-attachment: fixed;
+    mask-image:
+        linear-gradient(#000 0 0),
+        conic-gradient(
+            from calc((var(--start, 0) - 40) * 1deg),
             transparent 0deg,
-            var(--glow-color),
-            transparent 60deg
-        )
-        border-box;
-    -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: destination-out;
-    mask-composite: exclude;
+            white,
+            transparent 80deg
+        );
+    mask-clip: padding-box, border-box;
+    mask-composite: intersect;
+    -webkit-mask-image:
+        linear-gradient(#000 0 0),
+        conic-gradient(
+            from calc((var(--start, 0) - 40) * 1deg),
+            transparent 0deg,
+            white,
+            transparent 80deg
+        );
+    -webkit-mask-clip: padding-box, border-box;
+    -webkit-mask-composite: source-in;
     opacity: var(--active);
-    transition: opacity 0.3s;
+    transition: opacity 0.4s;
 }
 
 .category-btn:hover {
@@ -1689,16 +1741,19 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .footer-inner {
-    max-width: 900px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: 14px 28px 12px;
+    padding: 32px 40px 24px;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px 48px;
+    align-items: start;
 }
 
 .footer-links {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 10px;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .footer-nav-link {
@@ -1706,67 +1761,50 @@ input[type="range"]::-webkit-slider-thumb {
     border: none;
     color: var(--text-muted);
     font-family: 'Nunito', sans-serif;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
-    padding: 3px 14px;
+    padding: 2px 0;
     transition: color var(--transition);
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    position: relative;
-}
-.footer-nav-link:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 10px;
-    width: 1px;
-    background: var(--border);
+    text-align: left;
 }
 .footer-nav-link:hover { color: var(--primary); }
 
-.footer-rule { height: 1px; background: var(--border); margin-bottom: 10px; }
+.footer-rule { display: none; }
 
-.footer-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+.footer-bottom { display: none; }
 
 .footer-brand {
     font-family: 'Baloo 2', cursive;
     font-weight: 800;
-    font-size: 0.8rem;
+    font-size: 1.1rem;
     color: var(--primary);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding-right: 16px;
-    margin-right: 16px;
-    border-right: 1px solid var(--border);
+    letter-spacing: 0.02em;
+    display: block;
+    margin-bottom: 6px;
 }
 
 .footer-copy {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     font-weight: 600;
-    letter-spacing: 0.02em;
+    display: block;
+    margin-top: 4px;
 }
-.footer-copy:not(:last-child) { padding-right: 14px; margin-right: 14px; border-right: 1px solid var(--border); }
 
-/* animated footer columns */
-.footer-col {
-    opacity: 0;
-    filter: blur(4px);
-    transform: translateY(-8px);
+.footer-col-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: block;
 }
-.footer-col.footer-animated {
-    animation: footer-blur-in 0.8s ease forwards;
-}
-.footer-col:nth-child(1) { animation-delay: 0.05s; }
-.footer-col:nth-child(2) { animation-delay: 0.15s; }
-.footer-col:nth-child(3) { animation-delay: 0.25s; }
+
+/* footer columns — always visible, no animation jank */
+.footer-col { opacity: 1; }
 
 /* ============================================================
    INFO PAGES
@@ -2055,21 +2093,38 @@ input[type="range"]::-webkit-slider-thumb {
 /* ============================================================
    RESPONSIVE
    ============================================================ */
+@media (max-width: 640px) {
+    /* Footer: stack columns on mobile */
+    .footer-inner {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 28px 24px 20px;
+    }
+    .footer-links { flex-direction: column; }
+    .footer-nav-link { font-size: 0.82rem; padding: 2px 0; }
+}
+
 @media (max-width: 600px) {
     .landing-top { border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; }
-    .footer-nav-link { font-size: 0.72rem; padding: 3px 10px; }
-    .footer-bottom { flex-wrap: wrap; gap: 6px; justify-content: center; }
-    .footer-brand { border-right: none; padding-right: 0; margin-right: 0; }
-    .footer-copy:not(:last-child) { border-right: none; padding-right: 0; margin-right: 0; }
     .bg-circle:nth-child(2) { width: 300px; height: 300px; }
     .bg-circle:nth-child(3) { width: 380px; height: 380px; }
     .question-main { font-size: 1.1rem; padding: 20px 16px; }
     .result-img-wrap { height: 200px; }
     .companion-grid { grid-template-columns: 1fr; }
     .cb-grid { grid-template-columns: repeat(2, 1fr); }
+    .category-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}
+
+@media (min-width: 768px) {
+    .category-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+    .category-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 }
 
 @media (max-width: 360px) {
     .landing-top { border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
     .day-buttons { flex-direction: column; }
+    .category-grid { grid-template-columns: repeat(2, 1fr); }
 }

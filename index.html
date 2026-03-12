@@ -264,12 +264,9 @@
 
                 <div style="display:flex; gap:12px; margin-top:24px;">
                     <button class="btn btn-ghost" onclick="wizardBack(3)" style="flex:1;">← Back</button>
-                    <button class="sparkle-btn" onclick="saveSetup()" style="flex:2; border:none; cursor:pointer; position:relative; overflow:hidden;">
+                    <button class="sparkle-btn" id="sparkle-btn-main" onclick="saveSetup()" style="flex:2; border:none; cursor:pointer; position:relative;">
+                        <canvas class="sparkle-canvas" id="sparkle-canvas" aria-hidden="true"></canvas>
                         <div class="sparkle-btn-inner">Let's go! 🚀</div>
-                        <span class="sparkle-star sparkle-star-1">✦</span>
-                        <span class="sparkle-star sparkle-star-2">✦</span>
-                        <span class="sparkle-star sparkle-star-3">✦</span>
-                        <span class="sparkle-star sparkle-star-4">✦</span>
                     </button>
                 </div>
             </div>
@@ -339,25 +336,24 @@
     <!-- ===== FOOTER ===== -->
     <footer class="site-footer">
         <div class="footer-inner">
-            <div class="footer-col" style="animation-delay:0s;">
+            <div class="footer-col">
                 <div class="footer-brand">FinditPal</div>
                 <div class="footer-copy">University of Canberra · 2025</div>
+                <div class="footer-copy">© All rights reserved.</div>
             </div>
-            <nav class="footer-links footer-col" style="animation-delay:0.1s;">
+            <nav class="footer-links footer-col">
+                <span class="footer-col-label">Product</span>
                 <button class="footer-nav-link" onclick="showInfoPage('about-page')">What is FinditPal</button>
                 <button class="footer-nav-link" onclick="showInfoPage('problem-page')">The Problem</button>
                 <button class="footer-nav-link" onclick="showInfoPage('audience-page')">Who It's For</button>
             </nav>
-            <nav class="footer-links footer-col" style="animation-delay:0.2s;">
+            <nav class="footer-links footer-col">
+                <span class="footer-col-label">Resources</span>
                 <button class="footer-nav-link" onclick="showInfoPage('how-page')">How It Works</button>
                 <button class="footer-nav-link" onclick="showInfoPage('access-page')">Accessibility</button>
                 <button class="footer-nav-link" onclick="showInfoPage('roadmap-page')">Roadmap</button>
                 <button class="footer-nav-link" onclick="showInfoPage('contact-page')">Contact</button>
             </nav>
-            <div class="footer-rule"></div>
-            <div class="footer-bottom footer-col" style="animation-delay:0.3s;">
-                <span class="footer-copy">All rights reserved.</span>
-            </div>
         </div>
     </footer>
 
