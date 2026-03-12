@@ -328,6 +328,7 @@ function updateAllMascots() {
         el.innerHTML = imgTag;
         el.className = 'mascot-circle ' + m.cls;
     });
+    if (typeof setMascotCircleVariant === 'function') setMascotCircleVariant(state.mascot);
 }
 
 // ============================================================
@@ -928,7 +929,6 @@ async function fetchTMDBTV(item) {
 async function fetchTMDBPerson(item) {
     return tmdbSearch('person', item);
 }
-
 // ---- TVMaze: fictional characters from TV shows ----
 // Free, no auth, CORS-friendly. Returns character portraits.
 async function fetchTVMazeCharacter(name) {
@@ -1813,3 +1813,89 @@ window.searchResult      = searchResult;
 window.deleteHistoryItem = deleteHistoryItem;
 window.reuseHistory      = reuseHistory;
 window.clearHistory      = clearHistory;
+
+// ============================================================
+// UI ENHANCEMENTS — GlowingEffect, Mascot Circles, Footer
+// ============================================================
+
+// 1. GlowingEffect: track mouse over category cards and set --start / --active CSS vars
+(function initGlowingEffect() {
+    function attachGlowTracking(pageId) {
+        const page = document.getElementById(pageId);
+        if (!page) return;
+        page.addEventListener('pointermove', (e) => {
+            const cards = page.querySelectorAll('.category-btn');
+            cards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const cx = rect.left + rect.width / 2;
+                const cy = rect.top + rect.height / 2;
+                const angle = Math.atan2(e.clientY - cy, e.clientX - cx) * (180 / Math.PI);
+                card.style.setProperty('--start', String(angle + 90));
+                const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+                const proximity = Math.max(rect.width, rect.height) * 0.75;
+                card.style.setProperty('--active', dist < proximity ? '1' : '0');
+            });
+        });
+        page.addEventListener('pointerleave', () => {
+            page.querySelectorAll('.category-btn').forEach(card => {
+                card.style.setProperty('--active', '0');
+            });
+        });
+    }
+    // Attach after DOM is ready; re-attach when pages become visible
+    document.addEventListener('DOMContentLoaded', () => {
+        attachGlowTracking('category-page');
+        attachGlowTracking('landing-page');
+    });
+    // Also hook into MutationObserver for dynamically-added cards
+    const glowObserver = new MutationObserver(() => {
+        attachGlowTracking('category-page');
+        attachGlowTracking('landing-page');
+    });
+    const catPage = document.getElementById('category-page');
+    const landPage = document.getElementById('landing-page');
+    if (catPage) glowObserver.observe(catPage, { childList: true, subtree: true });
+    if (landPage) glowObserver.observe(landPage, { childList: true, subtree: true });
+})();
+
+// 2. Mascot circle color switching — sets CSS vars per mascot palette
+const MASCOT_CIRCLE_PALETTES = {
+    panda:   { c1: 'rgba(203,213,225,0.6)', c2: 'rgba(168,230,207,0.5)', c3: 'rgba(148,163,232,0.4)', gradient: 'rgba(168,230,207,0.08)' },
+    dragon:  { c1: 'rgba(251,146,60,0.6)',  c2: 'rgba(239,68,68,0.5)',   c3: 'rgba(251,191,36,0.4)', gradient: 'rgba(251,146,60,0.08)' },
+    dog:     { c1: 'rgba(251,191,36,0.6)',  c2: 'rgba(245,158,11,0.5)',  c3: 'rgba(234,179,8,0.4)',  gradient: 'rgba(251,191,36,0.08)' },
+    cat:     { c1: 'rgba(167,139,250,0.6)', c2: 'rgba(139,92,246,0.5)',  c3: 'rgba(196,181,253,0.4)',gradient: 'rgba(167,139,250,0.08)' },
+    penguin: { c1: 'rgba(56,189,248,0.6)',  c2: 'rgba(14,165,233,0.5)',  c3: 'rgba(125,211,252,0.4)',gradient: 'rgba(56,189,248,0.08)' },
+    zebra:   { c1: 'rgba(148,163,232,0.6)', c2: 'rgba(99,102,241,0.5)',  c3: 'rgba(199,210,254,0.4)',gradient: 'rgba(148,163,232,0.08)' },
+    monkey:  { c1: 'rgba(251,146,60,0.6)',  c2: 'rgba(245,158,11,0.5)',  c3: 'rgba(254,215,170,0.4)',gradient: 'rgba(251,146,60,0.08)' },
+};
+
+function setMascotCircleVariant(mascot) {
+    const p = MASCOT_CIRCLE_PALETTES[mascot] || MASCOT_CIRCLE_PALETTES.panda;
+    const root = document.documentElement;
+    root.style.setProperty('--circle-c1', p.c1);
+    root.style.setProperty('--circle-c2', p.c2);
+    root.style.setProperty('--circle-c3', p.c3);
+    root.style.setProperty('--circle-gradient', p.gradient);
+}
+
+// 3. Footer IntersectionObserver — animate columns when footer enters viewport
+(function initFooterObserver() {
+    function observe() {
+        const cols = document.querySelectorAll('.footer-col');
+        if (!cols.length) return;
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('footer-animated');
+                    io.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        cols.forEach(col => io.observe(col));
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', observe);
+    } else {
+        observe();
+    }
+})();

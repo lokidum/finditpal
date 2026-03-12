@@ -56,16 +56,29 @@
 <!-- ==================== SPLASH SCREEN ==================== -->
 <div id="splash-screen" class="splash-screen active">
     <img src="logo.png" class="splash-logo" id="splash-logo" alt="FinditPal">
-    <div class="splash-ring-wrap">
-        <svg class="splash-ring" viewBox="0 0 60 60">
-            <circle class="splash-ring-track" cx="30" cy="30" r="26"/>
-            <circle class="splash-ring-fill" cx="30" cy="30" r="26" id="splash-ring-fill"/>
-        </svg>
+    <div class="pl">
+        <div class="pl__outer-ring"></div>
+        <div class="pl__inner-ring"></div>
+        <div class="pl__track-cover"></div>
+        <div class="pl__ball">
+            <div class="pl__ball-texture"></div>
+            <div class="pl__ball-outer-shadow"></div>
+            <div class="pl__ball-inner-shadow"></div>
+            <div class="pl__ball-side-shadows"></div>
+        </div>
     </div>
 </div>
 
 <!-- ==================== SETUP PAGE ==================== -->
 <div id="setup-page" class="page">
+    <!-- Floating background shapes -->
+    <div class="setup-shapes" aria-hidden="true">
+        <div class="setup-shape setup-shape-1"></div>
+        <div class="setup-shape setup-shape-2"></div>
+        <div class="setup-shape setup-shape-3"></div>
+        <div class="setup-shape setup-shape-4"></div>
+        <div class="setup-shape setup-shape-5"></div>
+    </div>
     <div class="wizard-wrap">
 
         <!-- Logo -->
@@ -251,7 +264,13 @@
 
                 <div style="display:flex; gap:12px; margin-top:24px;">
                     <button class="btn btn-ghost" onclick="wizardBack(3)" style="flex:1;">← Back</button>
-                    <button class="btn btn-primary wizard-btn" onclick="saveSetup()" style="flex:2;">Let's go! 🚀</button>
+                    <button class="sparkle-btn" onclick="saveSetup()" style="flex:2; border:none; cursor:pointer; position:relative; overflow:hidden;">
+                        <div class="sparkle-btn-inner">Let's go! 🚀</div>
+                        <span class="sparkle-star sparkle-star-1">✦</span>
+                        <span class="sparkle-star sparkle-star-2">✦</span>
+                        <span class="sparkle-star sparkle-star-3">✦</span>
+                        <span class="sparkle-star sparkle-star-4">✦</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -269,7 +288,15 @@
     </div>
 
     <div class="landing-top">
-        <div style="max-width:600px; margin:0 auto;">
+        <!-- Animated background circles -->
+        <div class="bg-circles-wrap" aria-hidden="true">
+            <div class="bg-circle"></div>
+            <div class="bg-circle"></div>
+            <div class="bg-circle"></div>
+        </div>
+        <!-- Animated grid -->
+        <div class="animated-grid" aria-hidden="true"></div>
+        <div style="max-width:600px; margin:0 auto; position:relative; z-index:1;">
             <div class="mascot-wrap" style="margin:0 0 16px;">
                 <div class="mascot-circle mascot-panda" id="landing-mascot">🐼</div>
                 <div class="speech-bubble" id="landing-bubble">
@@ -312,20 +339,24 @@
     <!-- ===== FOOTER ===== -->
     <footer class="site-footer">
         <div class="footer-inner">
-            <nav class="footer-links">
+            <div class="footer-col" style="animation-delay:0s;">
+                <div class="footer-brand">FinditPal</div>
+                <div class="footer-copy">University of Canberra · 2025</div>
+            </div>
+            <nav class="footer-links footer-col" style="animation-delay:0.1s;">
                 <button class="footer-nav-link" onclick="showInfoPage('about-page')">What is FinditPal</button>
                 <button class="footer-nav-link" onclick="showInfoPage('problem-page')">The Problem</button>
                 <button class="footer-nav-link" onclick="showInfoPage('audience-page')">Who It's For</button>
+            </nav>
+            <nav class="footer-links footer-col" style="animation-delay:0.2s;">
                 <button class="footer-nav-link" onclick="showInfoPage('how-page')">How It Works</button>
                 <button class="footer-nav-link" onclick="showInfoPage('access-page')">Accessibility</button>
                 <button class="footer-nav-link" onclick="showInfoPage('roadmap-page')">Roadmap</button>
                 <button class="footer-nav-link" onclick="showInfoPage('contact-page')">Contact</button>
             </nav>
             <div class="footer-rule"></div>
-            <div class="footer-bottom">
-                <span class="footer-brand">FinditPal</span>
-                <span class="footer-copy">University of Canberra</span>
-                <span class="footer-copy">2025. All rights reserved.</span>
+            <div class="footer-bottom footer-col" style="animation-delay:0.3s;">
+                <span class="footer-copy">All rights reserved.</span>
             </div>
         </div>
     </footer>
@@ -553,8 +584,9 @@
 </div>
 
 <!-- ==================== CATEGORY PAGE ==================== -->
-<div id="category-page" class="page">
-    <div style="width:100%; max-width:640px; margin:0 auto;">
+<div id="category-page" class="page" style="position:relative;">
+    <div class="animated-grid" aria-hidden="true"></div>
+    <div style="width:100%; max-width:640px; margin:0 auto; position:relative; z-index:1;">
         <div class="top-bar">
             <img src="logo.png" class="site-logo-bar" alt="FinditPal">
             <div style="display:flex; gap:8px;">
