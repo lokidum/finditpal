@@ -1231,7 +1231,6 @@ input[type="range"]::-webkit-slider-thumb {
     align-items: center;
     gap: 8px;
     position: relative;
-    overflow: hidden;
     /* glow vars */
     --start: 0;
     --active: 0;
@@ -1842,6 +1841,8 @@ input[type="range"]::-webkit-slider-thumb {
    ============================================================ */
 #about-page, #problem-page, #audience-page, #how-page,
 #access-page, #roadmap-page, #contact-page {
+    height: 100dvh;
+    min-height: unset;
     overflow-y: auto;
     align-items: stretch;
 }
@@ -2124,7 +2125,7 @@ input[type="range"]::-webkit-slider-thumb {
 /* ============================================================
    PAGE ENTER ANIMATION
    ============================================================ */
-.page.active > * { animation: slide-up 0.3s ease; }
+.page.active > *:not(.page-shapes):not(.animated-grid) { animation: slide-up 0.3s ease; }
 .page-entering { animation: slide-up 0.35s ease; }
 
 /* ============================================================
